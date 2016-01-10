@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="comNum.Location" type="System.Drawing.Point, System.Drawing">
+    <value>13, 14</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="comNum.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="comNum.Size" type="System.Drawing.Size, System.Drawing">
+    <value>105, 24</value>
+  </data>
+  <data name="btnOpen.Location" type="System.Drawing.Point, System.Drawing">
+    <value>11, 82</value>
+  </data>
+  <data name="btnOpen.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnOpen.Size" type="System.Drawing.Size, System.Drawing">
+    <value>107, 28</value>
+  </data>
+  <data name="btnOpen.Text" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="textCmd.Location" type="System.Drawing.Point, System.Drawing">
+    <value>131, 302</value>
+  </data>
+  <data name="textCmd.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="textCmd.Size" type="System.Drawing.Size, System.Drawing">
+    <value>453, 26</value>
+  </data>
+  <data name="listCmd.Location" type="System.Drawing.Point, System.Drawing">
+    <value>131, 16</value>
+  </data>
+  <data name="listCmd.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="listCmd.Size" type="System.Drawing.Size, System.Drawing">
+    <value>561, 276</value>
+  </data>
+  <data name="btnCommand.Location" type="System.Drawing.Point, System.Drawing">
+    <value>11, 300</value>
+  </data>
+  <data name="btnCommand.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnCommand.Size" type="System.Drawing.Size, System.Drawing">
+    <value>107, 28</value>
+  </data>
+  <data name="btnCommand.Text" xml:space="preserve">
+    <value>输入命令 &gt;&gt;</value>
+  </data>
+  <data name="textDelay.Location" type="System.Drawing.Point, System.Drawing">
+    <value>16, 264</value>
+  </data>
+  <data name="textDelay.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="textDelay.Size" type="System.Drawing.Size, System.Drawing">
+    <value>55, 26</value>
+  </data>
+  <data name="btnDelay.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="btnDelay.Location" type="System.Drawing.Point, System.Drawing">
+    <value>11, 226</value>
+  </data>
+  <data name="btnDelay.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnDelay.Size" type="System.Drawing.Size, System.Drawing">
+    <value>107, 28</value>
+  </data>
+  <data name="btnDelay.Text" xml:space="preserve">
+    <value>延时 &gt;&gt;</value>
+  </data>
+  <data name="btnSend.Location" type="System.Drawing.Point, System.Drawing">
+    <value>11, 120</value>
+  </data>
+  <data name="btnSend.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnSend.Size" type="System.Drawing.Size, System.Drawing">
+    <value>107, 28</value>
+  </data>
+  <data name="btnSend.Text" xml:space="preserve">
+    <value>全部发送</value>
+  </data>
+  <data name="chkCycle.Location" type="System.Drawing.Point, System.Drawing">
+    <value>13, 158</value>
+  </data>
+  <data name="chkCycle.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="chkCycle.Size" type="System.Drawing.Size, System.Drawing">
+    <value>91, 20</value>
+  </data>
+  <data name="chkCycle.Text" xml:space="preserve">
+    <value>循环发送</value>
+  </data>
+  <data name="textRecv.Font" type="System.Drawing.Font, System.Drawing">
+    <value>SimSun, 12pt</value>
+  </data>
+  <data name="textRecv.Location" type="System.Drawing.Point, System.Drawing">
+    <value>16, 372</value>
+  </data>
+  <data name="textRecv.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="textRecv.Size" type="System.Drawing.Size, System.Drawing">
+    <value>676, 251</value>
+  </data>
+  <data name="baudRate.Location" type="System.Drawing.Point, System.Drawing">
+    <value>13, 48</value>
+  </data>
+  <data name="baudRate.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="baudRate.Size" type="System.Drawing.Size, System.Drawing">
+    <value>105, 24</value>
+  </data>
+  <data name="btnClearRecv.Location" type="System.Drawing.Point, System.Drawing">
+    <value>11, 338</value>
+  </data>
+  <data name="btnClearRecv.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnClearRecv.Size" type="System.Drawing.Size, System.Drawing">
+    <value>107, 28</value>
+  </data>
+  <data name="btnClearRecv.Text" xml:space="preserve">
+    <value>清空接收区</value>
+  </data>
+  <data name="btnClearCmd.Location" type="System.Drawing.Point, System.Drawing">
+    <value>592, 300</value>
+  </data>
+  <data name="btnClearCmd.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnClearCmd.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 28</value>
+  </data>
+  <data name="btnClearCmd.Text" xml:space="preserve">
+    <value>清空命令</value>
+  </data>
+  <data name="chkHex.Location" type="System.Drawing.Point, System.Drawing">
+    <value>617, 343</value>
+  </data>
+  <data name="chkHex.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="chkHex.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 20</value>
+  </data>
+  <data name="chkHex.Text" xml:space="preserve">
+    <value>16进制</value>
+  </data>
+  <data name="btnSave.Location" type="System.Drawing.Point, System.Drawing">
+    <value>265, 338</value>
+  </data>
+  <data name="btnSave.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnSave.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 28</value>
+  </data>
+  <data name="btnSave.Text" xml:space="preserve">
+    <value>保存命令</value>
+  </data>
+  <data name="btnLoad.Location" type="System.Drawing.Point, System.Drawing">
+    <value>373, 338</value>
+  </data>
+  <data name="btnLoad.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnLoad.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 28</value>
+  </data>
+  <data name="btnLoad.Text" xml:space="preserve">
+    <value>载入命令</value>
+  </data>
+  <data name="btnChangeLang.Location" type="System.Drawing.Point, System.Drawing">
+    <value>505, 338</value>
+  </data>
+  <data name="btnChangeLang.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="btnChangeLang.Size" type="System.Drawing.Size, System.Drawing">
+    <value>49, 28</value>
+  </data>
+  <data name="btnChangeLang.Text" xml:space="preserve">
+    <value>En</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="btnChangeLang.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="label1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>78, 267</value>
+  </data>
+  <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>40, 16</value>
+  </data>
+  <data name="label1.Text" xml:space="preserve">
+    <value>毫秒</value>
+  </data>
+  <data name="chkHide.Location" type="System.Drawing.Point, System.Drawing">
+    <value>131, 343</value>
+  </data>
+  <data name="chkHide.Size" type="System.Drawing.Size, System.Drawing">
+    <value>59, 20</value>
+  </data>
+  <data name="chkHide.Text" xml:space="preserve">
+    <value>隐藏</value>
+  </data>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>8, 16</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>709, 639</value>
+  </data>
+  <data name="$this.Font" type="System.Drawing.Font, System.Drawing">
+    <value>SimSun, 12pt</value>
+  </data>
+  <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        AAABAAIAICAAAAEACACoCAAAJgAAACAgAAABACAAqBAAAM4IAAAoAAAAIAAAAEAAAAABAAgAAAAAAAAE
+        AAAAAAAAAAAAAAABAAAAAQAAAAAAAG4zBAB/PQcAcz8UAIE+BgCHQwwAkUYGAJNIBwCTSgwAmEwJAJVP
+        EgCbURAAnVMTAJpTFgCXVBwAmVccAKFUDQChVhEApVkQAKhbEgCrXhMArF4TAKldFACsXxQAoFoaAKVb
+        GACjXB0Aq2AWAK5iFgCqYhsArWMZAK5kGACuZR0AsGQXALFlGAC1aRoAtmocALZsHAC4bR4AunAfAIlR
+        IACGVS8AiFMqAJFWJgCTXTIAqGQmAKVlKQChYiwAqWsoALJpIwCxayYAs20nALZvJgC6cSEAvHIhAL10
+        IwC6ciQAv3YkALV0LgC1eCsAv3spAL54LACgZzcAqm00AKpuOwCxbzIAoXE8ALRyMAC5dzYAvXgwALFz
+        PAC5eDoAwHkmAMJ6KADCfCgAxH0pAMF9MQDAfTYAkWJAAJtpQACYbksAnXBLAJt0UgCmckcAqnFBAKBz
+        SQCndEoArnlNALp+QwC1fk0ApXtaAKl/XwClfmAAu4I2AMaAKwDGgi0AyIItAMiELgDKhjAAy4kyAMyJ
+        MgDNizQAz402AMGBPwDHij0Ay445ANCPNwDIkj4A0ZE4ANOUOwDTlj0A1JU8ANaZPwCygkcAvoBDAKmA
+        XwC0hV0AvpleAK6DZACvimoAtoplALiJYQC/jWEAsIpsAL2SbACxj3QArJZzAKuYdQCunXkAs5F1ALuT
+        cgCzlHoAuZh+ALulcgDCg0MAwYRGAMGFSwDIlkwA1ppAANibQQDYnEIA2Z9EAMSKUQDGjVMAxY1UAMON
+        WgDEm1YAyJ9aANCbUQDaoUUA3KNHANyjSADdpUkA26ZPAN6oTQDdqVkA1rRcAN+0XwDgqk0A4axPAOKu
+        UADksFIA5bJUAOW0VQDmtlgA6LlaAOm7XADqvV0A7L9fAMKQYQDJmGIAxpZqAMGUbwDDmXMAwJx6AMef
+        fgDEomQAzqFzAM2hdwDKoHsA0ad/ANOpewDRtHAA3bR/AOK0ZADhs2kA7MJhAO7EYwDpwWQA7sZkAO/I
+        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
+        Lf6aXCk9AAAAAAAAAAAAAAAAoVcRBZ5RDOO+dCP/0ZA4/96mSv/mtVb/6r1d/+u+Xv/ouFn/469R/92p
+        WP/lxpr/yaaF/3Q2Bdm4hUYBAAAAAAAAAACzdSkSm1EN8cuHMf/ouFn/+Ndz//rdeP/uxWT/y4oz/7ty
+        JP+xcjj/jUgOogAAAAAAAAAAAAAAAAAAAAAAAAAAlUsKZqdaEf+9dCP/zIoz/9ebQP/ep0r/4q1P/+Sw
+        Uv/ksVP/5LFS/+OuUf/gqk3/2qJI9NuiRtDaoEXM3qhM2uW0Vfi1eCv/wHgm/+GsT//00G3/+dp2//HJ
+        Z//WmT//rF8U/5BGB9iVUxsOAAAAAAAAAAAAAAAAAAAAAAAAAACaUA0CkEYHt6ZZEP+4bR7/xH0p/82K
+        M//TlDv/2JxB/9uiRv/epkr/36lM/+CqTf/irU//5LBS/+WyVP/mtlb/6Lla/8iSPv+2bB3/3KNH//DI
+        Z//31nL/8Mln/9qgRf+fVRHnnFUUIwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACRSgsQiUIHzbF0
+        Pf/BhUv/wH02/8F5KP/GgCv/y4cx/8+ONv/Skjn/1JU8/9aZP//YnEL/2Z1C/9meQ//ZnkP/y445/65j
+        F//YnUL/7cJh//TQbf/uxWT/2qFF/6ZdFMkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        AACRThgOjU8cscCYdP/Yup7/06uF/8aNVP+9eDD/vHIi/751I//BeCb/w3wo/8V+Kv/Efir/xH0p/8N7
+        KP+6ciL/q2AW/9aZP//pu1v/8Mln/+u+Xf/YnEL/q2EW4gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        AAAAAAAAAAAAAAAAAACdZjoBjVYuYKh9XOXey7v/6tvO/+LLtf/TrYr/w45c/7l4Ov+zayb/r2Uc/61h
+        F/+qXhX/qFwU/6FWEf+uZBj/1ZY9/+a0Vf/rvl7/5bJU/9OUO/+qXxTrAAAAAAAAAAAAAAAAAAAAAAAA
+        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAApnxcCZRkQGWkdlblyrGe/+HSxv/l1cj/3sm3/9W4
+        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
+</value>
+  </data>
+  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>串口批量命令工具</value>
+  </data>
+</root>
