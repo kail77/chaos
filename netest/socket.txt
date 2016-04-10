@@ -1,0 +1,55 @@
+Bind绑定地址
+有时创建socket可以指定IP-PORT,有时需要调用Bind来指定，效果是一样的。如果未指定PORT则会分配一个默认的，接收方一般要先指定端口，否则发送方不知道你的端口。
+绑定的IP地址有两种，本机在局域网的IP,如192.168.1.100, 这时的socket可用于局域网上通讯，需要防火墙的允许；另一种IP是127.0.0.1,仅用于本地通讯，无需防火墙权限。如创建Winsock:
+  sockSvc.Create(htons(8000), SOCK_DGRAM);//LAN,need permision of firewall
+  or
+  sockSvc.Create(htons(8000), SOCK_DGRAM, _T("127.0.0.1")))//local only
+注意端口是按照低位在后，如果在windows上要加上htons()
+
+UDP广播
+UDP Socket可以给本网段的全部对象发送数据。
+广播发送
+ 1.给socket设置允许broadcast: 
+  sock.SetSockOpt(SO_BROADCAST, true);
+ 2.设置发送地址为广播地址255.255.255.255 
+  adr.sin_addr.s_addr = INADDR_BROADCAST;
+  adr.sin_port = PORT_UDPDEV;
+  sock.SendTo("hello", 5, (SOCKADDR*)&adr, sizeof(SOCKADDR_IN)))
+广播接收
+  sockRecv.SetSockOpt(SO_BROADCAST, true); //接收方也要允许broadcast?
+  //adr.sin_addr.s_addr = INADDR_BROADCAST; //不必绑定到广播地址
+  //adr.sin_port = PORT_UDPDEV; // 必须指定广播端口
+  //sockRecv.Bind(&adr);
+  sockRecv.RecvFrom("hello", 5, (SOCKADDR*)&adr, sizeof(SOCKADDR_IN)))
+
+广播地址
+地址255.255.255.255仅能用于本地广播，要在局域网上广播则要和掩码合并计算，如
+IP           掩码            广播地址
+192.168.0.2  255.255.255.0   192.168.0.255
+10.11.9.17   255.255.248.0   10.11.15.255
+192.168.1.39 255.255.255.192 192.168.1.63
+算法：前两字节不变，后两字节从有效位开始全变为1,如17-31,39-63,9-15, 与~MASK字节 OR 操作，如
+2|255=255, 9|~248=15, 39|~192=63
+
+UDP组播
+组播可以给特定地址范围发送数据，相对于广播，组播的网络占用就较少，只有加入组播的接收方，才会收到数据包。
+IP组播通信需要一个特殊的组播地址，IP组播地址是一组D类IP地址，范围从224.0.0.0 到239.255.255.255。其中还有很多地址是为特殊的目的保留的。224.0.0.0到224.0.0.255的地址最好不要用，因为他们大多是为了特殊的目的保持的（比如IGMP协议）
+
+1.Send示例
+  IPAddress ip = IPAddress.Parse("224.1.2.3");
+  Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+  s.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 1);
+  IPEndPoint ipep = new IPEndPoint(ip, 5000);
+  ......
+  s.SendTo(buff, buff.Length, SocketFlags.None, ipep);
+  在多播中设置了TTl值(Time to live)，每一个ip数据报文中都包含一个TTL，每当有路由器转发该报文时，TTL减1，直到减为0时，生命周期结束，报文即时没有到达目的地，也立即宣布死亡
+
+2.Recv示例
+  Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+  IPEndPoint ipep = new IPEndPoint(IPAddress.Any, 5000);
+  s.Bind(ipep);
+  s.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership,
+  new MulticastOption(IPAddress.Parse("224.1.2.3"), IPAddress.Any));
+  ......
+  s.Receive(b, 4, SocketFlags.None);
+

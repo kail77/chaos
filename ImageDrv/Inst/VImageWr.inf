@@ -1,0 +1,65 @@
+; VImageWr.inf, INF file for Virtual Image Writer Printer
+; Copyright (c) 2015 Secusoft Inc.
+
+[Version]
+Signature="$Windows NT$"
+Provider=%Vendor%
+LayoutFile=ntprint.inf
+ClassGUID={4D36E979-E325-11CE-BFC1-08002BE10318}
+Class=Printer
+DriverVer=10/07/2015,1.0.0.1
+CatalogFile=vimagewr.cat
+
+; Manufacturer section.
+[Manufacturer]
+%Mfg1%=Model1, NTx86, NTamd64
+
+; Model sections. 
+[Model1]
+%Device1% = INSTDATA1
+
+[Model1.NTx86]
+%Device1% = INSTDATA1
+
+[Model1.NTamd64]
+%Device1% = INSTDATA1
+
+; Installer Sections
+[INSTDATA1]
+CopyFiles=DRVFILES1
+DataFile=VImageWr.gpd
+DataSection=UNIDRV_DATA
+Include=NTPRINT.INF
+Needs=UNIDRV.OEM,UNIDRV_DATA
+
+; Copy Sections
+[DRVFILES1]
+VImageWr.gpd
+VImageWr.ini
+VImgDrv.dll
+VImgUI.dll
+
+;  Location of source files not in Layout.inf.
+[SourceDisksNames.x86]
+1 = %disk1%,,
+2 = %disk1%,,,i386
+
+[SourceDisksNames.amd64]
+1 = %Disk1%,,
+2 = %Disk1%,,,amd64
+
+[SourceDisksFiles]
+VImageWr.gpd = 1
+VImageWr.ini = 1
+VImgDrv.dll = 2
+VImgUI.dll = 2
+
+[DestinationDirs]
+DefaultDestDir=66000
+
+; Localizable Strings
+[Strings]
+Vendor = "Secusoft Inc."
+Mfg1 = "Secusoft"
+Device1 = "Virtual Image Writer"
+Disk1="VImageWr Printer Setup Disc"
