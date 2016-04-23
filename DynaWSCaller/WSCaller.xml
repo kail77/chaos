@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Config>
-	<Service wsdl="http://localhost/secuprint/dbsvc.asmx" address="http://localhost/secuprint/dbsvc.asmx" function="saveLogs" params="hehe" />
+	<Service wsdl="F:\Work\WSTest\WStest.wsdl" address="http://localhost:8081" function="saveLogs" params="hehe" />
 </Config>

@@ -4,7 +4,7 @@ using System.ComponentModel;
 //using System.Data;
 //using System.Drawing;
 //using System.Linq;
-//using System.Text;
+using System.Text;
 using System.Windows.Forms;
 
 using System.IO;
@@ -27,6 +27,7 @@ namespace DynaWSCaller
 		private object _objClient;
 		private ParameterInfo[] _paramInfos;
 		private string _strServiceName;
+		private string _sUrn; // xmlns:ns="urn:xxxsvcname"
 		public WSCaller()
 		{
 			InitializeComponent();
@@ -70,6 +71,13 @@ namespace DynaWSCaller
 			}
 			_strServiceName = description.Services[0].Name;
 			lblServiceName.Text = _strServiceName;
+
+			//XmlDocument xmlDoc = new XmlDocument();
+			//xmlDoc.Load(stream);
+			//XmlNode node = xmlDoc.SelectSingleNode("definitions");
+			//XmlAttribute attr;
+			//attr = (XmlAttribute)node.Attributes.GetNamedItem("xmlns:ns");
+			//_sUrn = attr.Value;	// xmlns:ns="urn:wservtest"
 
 			// 3. 创建客户端代理代理类。
 			ServiceDescriptionImporter importer = new ServiceDescriptionImporter();
@@ -157,11 +165,58 @@ namespace DynaWSCaller
 			strParam += method.ReturnParameter.Name; // null?
 			lblParam.Text = strParam;
 		}
+		private void Invoke_HttpPost(string sParam)
+		{
+			string sPostData;
+			_sUrn = "urn:wservtest";
+			sPostData = @"<?xml version=""1.0"" encoding=""utf-8""?>";
+			sPostData += @"<soapenv:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" ";
+			sPostData += string.Format(@"xmlns:urn=""{0}""> <soapenv:Header/>", _sUrn);//
+			sPostData += string.Format(@"<soapenv:Body> <urn:{0} soapenv:encodingStyle=""http://schemas.xmlsoap.org/soap/encoding/"">", cbFunction.Text);//methodname:add
+			sPostData += sParam;//"<a xsi:type=""xsd:int"">2</a> <b xsi:type=""xsd:string"">xyz</b>"
+			sPostData += string.Format(@"</urn:{0}></soapenv:Body> </soapenv:Envelope>", cbFunction.Text);
+			textParams.Text = sPostData;
+
+			byte[] dataArray = Encoding.Default.GetBytes(sPostData);
+			//创建请求
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(this.textAddress.Text);
+			//request.Headers.Add("SOAPAction http://tempuri.org/Register\"");
+			request.Method = "POST";
+			request.ContentLength = dataArray.Length;
+			request.ContentType = "application/x-www-form-urlencoded";//"text/xml;charset=\"utf-8\"";
+			request.Accept = "text/xml";
+			//创建输入流
+			Stream dataStream = null;
+			try
+			{
+				dataStream = request.GetRequestStream();
+			}
+			catch (Exception)
+			{
+				MessageBox.Show("fail to connect server");
+				return;
+			}
+			dataStream.Write(dataArray, 0, dataArray.Length);	//发送请求
+			dataStream.Close();
+			string strRes = string.Empty;	//读取返回消息
+			try
+			{
+				HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+				StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
+				strRes = reader.ReadToEnd();
+				reader.Close();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message);//连接服务器失败
+			}
+			textRet.Text = strRes;// return res;
+		}
 
 		private void btnInvoke_Click(object sender, EventArgs e)
 		{
-			MethodInfo method = _asmType.GetMethod(cbFunction.Text);
 			object[] arrObj = null;
+			string sXmlParam = null;
 			if (_paramInfos.Length > 0)
 			{
 				string[] strParams = textParams.Text.Split(',');
@@ -173,14 +228,28 @@ namespace DynaWSCaller
 				arrObj = new object[strParams.Length];
 				for (int i = 0; i < strParams.Length; i++)
 				{
-					if (_paramInfos[i].ParameterType.Name == "Int32")
+					if (_paramInfos[i].ParameterType == typeof(int))
+					{
 						arrObj[i] = Convert.ToInt32(strParams[i]);
-					else if (_paramInfos[i].ParameterType.Name == "Int64")
-						arrObj[i] = Convert.ToInt64(strParams[i]);
+						sXmlParam += string.Format(@"<{0} xsi:type=""xsd:int"">{1}</{2}>",
+							_paramInfos[i].Name, strParams[i], _paramInfos[i].Name);
+					}
 					else // string
+					{
 						arrObj[i] = strParams[i];
+						strParams[i] = strParams[i].Replace("<", "&lt;");
+						strParams[i] = strParams[i].Replace(">", "&gt;");
+						sXmlParam += string.Format(@"<{0} xsi:type=""xsd:string"">{1}</{2}>",
+							_paramInfos[i].Name, strParams[i], _paramInfos[i].Name);
+					}
 				}
 			}
+			if (chkHttpPost.Checked)
+			{
+				Invoke_HttpPost(sXmlParam);
+				return;
+			}
+			MethodInfo method = _asmType.GetMethod(cbFunction.Text);
 			object oret = null;
 			try
 			{

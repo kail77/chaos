@@ -44,6 +44,7 @@
 			this.textRet = new System.Windows.Forms.TextBox();
 			this.cbFunction = new System.Windows.Forms.ComboBox();
 			this.lblParam = new System.Windows.Forms.Label();
+			this.chkHttpPost = new System.Windows.Forms.CheckBox();
 			this.SuspendLayout();
 			// 
 			// lblWsdl
@@ -61,7 +62,7 @@
 			this.textWsdl.Location = new System.Drawing.Point(103, 8);
 			this.textWsdl.Margin = new System.Windows.Forms.Padding(4);
 			this.textWsdl.Name = "textWsdl";
-			this.textWsdl.Size = new System.Drawing.Size(396, 26);
+			this.textWsdl.Size = new System.Drawing.Size(568, 26);
 			this.textWsdl.TabIndex = 1;
 			// 
 			// lblAddress
@@ -79,13 +80,13 @@
 			this.textAddress.Location = new System.Drawing.Point(104, 42);
 			this.textAddress.Margin = new System.Windows.Forms.Padding(4);
 			this.textAddress.Name = "textAddress";
-			this.textAddress.Size = new System.Drawing.Size(396, 26);
+			this.textAddress.Size = new System.Drawing.Size(568, 26);
 			this.textAddress.TabIndex = 3;
 			// 
 			// chkSave
 			// 
 			this.chkSave.AutoSize = true;
-			this.chkSave.Location = new System.Drawing.Point(507, 11);
+			this.chkSave.Location = new System.Drawing.Point(679, 10);
 			this.chkSave.Margin = new System.Windows.Forms.Padding(4);
 			this.chkSave.Name = "chkSave";
 			this.chkSave.Size = new System.Drawing.Size(91, 20);
@@ -96,7 +97,7 @@
 			// btnInvoke
 			// 
 			this.btnInvoke.Enabled = false;
-			this.btnInvoke.Location = new System.Drawing.Point(507, 195);
+			this.btnInvoke.Location = new System.Drawing.Point(679, 107);
 			this.btnInvoke.Margin = new System.Windows.Forms.Padding(4);
 			this.btnInvoke.Name = "btnInvoke";
 			this.btnInvoke.Size = new System.Drawing.Size(100, 31);
@@ -117,7 +118,7 @@
 			// 
 			// btnLoad
 			// 
-			this.btnLoad.Location = new System.Drawing.Point(509, 37);
+			this.btnLoad.Location = new System.Drawing.Point(679, 38);
 			this.btnLoad.Name = "btnLoad";
 			this.btnLoad.Size = new System.Drawing.Size(100, 31);
 			this.btnLoad.TabIndex = 8;
@@ -154,16 +155,17 @@
 			// 
 			// textParams
 			// 
-			this.textParams.Location = new System.Drawing.Point(104, 184);
+			this.textParams.Location = new System.Drawing.Point(104, 157);
 			this.textParams.Multiline = true;
 			this.textParams.Name = "textParams";
-			this.textParams.Size = new System.Drawing.Size(395, 55);
+			this.textParams.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+			this.textParams.Size = new System.Drawing.Size(676, 131);
 			this.textParams.TabIndex = 12;
 			// 
 			// lblRet
 			// 
 			this.lblRet.AutoSize = true;
-			this.lblRet.Location = new System.Drawing.Point(13, 257);
+			this.lblRet.Location = new System.Drawing.Point(13, 343);
 			this.lblRet.Name = "lblRet";
 			this.lblRet.Size = new System.Drawing.Size(56, 16);
 			this.lblRet.TabIndex = 13;
@@ -171,10 +173,11 @@
 			// 
 			// textRet
 			// 
-			this.textRet.Location = new System.Drawing.Point(104, 254);
+			this.textRet.Location = new System.Drawing.Point(104, 294);
 			this.textRet.Multiline = true;
 			this.textRet.Name = "textRet";
-			this.textRet.Size = new System.Drawing.Size(396, 56);
+			this.textRet.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+			this.textRet.Size = new System.Drawing.Size(676, 140);
 			this.textRet.TabIndex = 14;
 			// 
 			// cbFunction
@@ -183,7 +186,7 @@
 			this.cbFunction.FormattingEnabled = true;
 			this.cbFunction.Location = new System.Drawing.Point(103, 111);
 			this.cbFunction.Name = "cbFunction";
-			this.cbFunction.Size = new System.Drawing.Size(396, 24);
+			this.cbFunction.Size = new System.Drawing.Size(569, 24);
 			this.cbFunction.TabIndex = 15;
 			this.cbFunction.SelectedIndexChanged += new System.EventHandler(this.cbFunction_SelectedIndexChanged);
 			// 
@@ -197,11 +200,22 @@
 			this.lblParam.TabIndex = 16;
 			this.lblParam.Text = "Params";
 			// 
+			// chkHttpPost
+			// 
+			this.chkHttpPost.AutoSize = true;
+			this.chkHttpPost.Location = new System.Drawing.Point(679, 78);
+			this.chkHttpPost.Name = "chkHttpPost";
+			this.chkHttpPost.Size = new System.Drawing.Size(99, 20);
+			this.chkHttpPost.TabIndex = 17;
+			this.chkHttpPost.Text = "Http-Post";
+			this.chkHttpPost.UseVisualStyleBackColor = true;
+			// 
 			// WSCaller
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(622, 322);
+			this.ClientSize = new System.Drawing.Size(792, 446);
+			this.Controls.Add(this.chkHttpPost);
 			this.Controls.Add(this.lblParam);
 			this.Controls.Add(this.cbFunction);
 			this.Controls.Add(this.textRet);
@@ -247,6 +261,7 @@
 		private System.Windows.Forms.TextBox textRet;
 		private System.Windows.Forms.ComboBox cbFunction;
 		private System.Windows.Forms.Label lblParam;
+		private System.Windows.Forms.CheckBox chkHttpPost;
 	}
 }
 
