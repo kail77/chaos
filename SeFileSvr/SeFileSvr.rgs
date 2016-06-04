@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{487B3E42-E543-45D2-9075-645132D8E2B9} = s 'SeFileSvr'
+		'SeFileSvr.EXE'
+		{
+			val AppID = s {487B3E42-E543-45D2-9075-645132D8E2B9}
+		}
+	}
+}

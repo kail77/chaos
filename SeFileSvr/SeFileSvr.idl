@@ -1,0 +1,20 @@
+// SeFileSvr.idl : IDL source for SeFileSvr.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (SeFileSvr.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	uuid(2D756954-B149-492B-994F-B26F826614CE),
+	version(1.0),
+	helpstring("SeFileSvr 1.0 Type Library")
+]
+library SEFILESVRLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+};
