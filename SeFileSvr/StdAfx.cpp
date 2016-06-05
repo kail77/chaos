@@ -6,7 +6,7 @@ int CServiceModule::InitSocketServer(void)
 	// load params from xml
 	m_wPort = 5500;//PORT_FILESVR;
 	m_nConnTimeout = 100; // 10sec
-	m_nBlockSize = 8; // 8M
+	m_nBlock = 8; // 8M
 	memset(m_bufState, 0, MAX_MEMBUFS);
 
 	int nStart = WSAStartup(MAKEWORD(2,2), &wd);//0=succ
@@ -136,7 +136,7 @@ PSTR CServiceModule::GetMemFromPool(int &index)
 		OutputDebugString(_T("exceed max bufs\n"));
 		return NULL;
 	}
-	pbuf = (char*)malloc(m_nBlockSize);
+	pbuf = (char*)malloc(m_nBlock*1024*1024);
 	if(pbuf)
 	{
 		WaitForSingleObject(m_hMutexBuf, INFINITE);
@@ -167,7 +167,7 @@ int CServiceModule::SendCmd(SOCKET sock, char cmd, char param, void *pdata, int 
 {
 	static char cmdBuf[256];
 	cmdBuf[0] = 'H';
-	cmdBuf[1] = '0';//(char)(len + 2);
+	cmdBuf[1] = (char)('0'+len);
 	cmdBuf[2] = cmd;
 	cmdBuf[3] = param;
 	if(pdata)
@@ -243,8 +243,8 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 	CServiceModule *pServ = (CServiceModule *)pParam;
 	struct ClientInfo *pClient=NULL;
 	LPOVERLAPPED pOverlap=NULL;
-	DWORD dwRecv=0,dwFlag=0,dwThreadID,dwSize,cbData;
-	int i, bRecv=0;
+	DWORD dwRecv=0,dwFlag=0,dwThreadID,dwSize,dwHigh=0,cbData;
+	int i, bRecv=0, nBlockSize=pServ->m_nBlock*1024*1024;
 	//char *pBuf;
 	TCHAR szText[256];
 	WSABUF wsaBuf;
@@ -267,7 +267,7 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				break;
 			}
 		}
-		if(dwRecv == 0)
+		if(dwRecv == 0) // client quit abnormally
 		{
 			OutputDebugString(_T("dwRecv == 0"));
 			//closesocket(pClient->sock);
@@ -285,7 +285,8 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 			pClient->nState &= ~FLAG_DATA;
 			pClient->cmdBuf[2] = 0; // receive next cmd
 			WriteFile(pClient->hFile, pClient->pBlockBuf, dwRecv, &cbData, NULL);
-			pServ->SendCmd(pClient->sock, 'U', 'D', &dwRecv, 4);
+			sprintf(szText, "%d", dwRecv);
+			pServ->SendCmd(pClient->sock, 'U', 'D', szText, strlen(szText)+1);
 		}
 		wsaBuf.len = CMDBUFSIZE;
 		wsaBuf.buf = pClient->cmdBuf;
@@ -297,6 +298,7 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 			pClient->nState = FLAG_UP;
 			if(pClient->cmdBuf[3]=='F' && !pClient->hFile)
 			{
+				// TODO: file already exist
 				pClient->hFile = CreateFile(pClient->cmdBuf+4, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, NULL,NULL);
 				if(pClient->hFile == INVALID_HANDLE_VALUE)
 					pClient->hFile = NULL;
@@ -306,13 +308,16 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 					pClient->iBuf = i;
 				}
 				if(pClient->pBlockBuf)
-					pServ->SendCmd(pClient->sock, 'U', 'B', &pServ->m_nBlockSize, 4);
+				{
+					sprintf(szText, "%d,0,0", pServ->m_nBlock);
+					pServ->SendCmd(pClient->sock, 'U', 'B', szText, strlen(szText)+1);
+				}
 			}
 			if(pClient->cmdBuf[3]=='D') // data
 			{
 				pClient->nState |= FLAG_DATA;
-				pClient->index = atoi(pClient->cmdBuf+4);//
-				wsaBuf.len = pServ->m_nBlockSize;
+				pClient->index = atoi(pClient->cmdBuf+4);//TODO: check index
+				wsaBuf.len = nBlockSize;
 				wsaBuf.buf = pClient->pBlockBuf;
 			}
 			break;
@@ -328,16 +333,20 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				{
 					pClient->pBlockBuf = pServ->GetMemFromPool(i);
 					pClient->iBuf = i;
-					dwSize = GetFileSize(pClient->hFile, NULL);
+					dwSize = GetFileSize(pClient->hFile, &dwHigh);
 				}
 				if(pClient->pBlockBuf)
-					pServ->SendCmd(pClient->sock, 'D', 'F', &dwSize, 4);
+				{
+					sprintf(szText, "%d,%d,%d", pServ->m_nBlock, dwSize, dwHigh);
+					pServ->SendCmd(pClient->sock, 'D', 'F', szText, strlen(szText)+1);
+					// TODO:file not exist
+				}
 			}
 			if(pClient->cmdBuf[3]=='D') // data
 			{
 				dwSize = GetFileSize(pClient->hFile, NULL);
-				pClient->index = atoi(pClient->cmdBuf+4);//
-				dwSize = min((int)dwSize-pClient->index*pServ->m_nBlockSize*1024*1024, pServ->m_nBlockSize*1024*1024);
+				pClient->index = atoi(pClient->cmdBuf+4);//TODO: check index
+				dwSize = min((int)dwSize-pClient->index*nBlockSize, nBlockSize);
 				ReadFile(pClient->hFile, pClient->pBlockBuf, dwSize, &cbData, NULL);
 				send(pClient->sock, pClient->pBlockBuf, cbData, 0);
 			}

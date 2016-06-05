@@ -97,7 +97,7 @@ public:
 	VEC_ClientInfo m_vClientInfo;
 	int m_nRecvThread; // num of receiving thread
 	int m_nConnTimeout;	// connection timeout, in sec
-	int m_nBlockSize;	// up/down block size, in MB
+	int m_nBlock;	// up/down block size, in MB
 	HANDLE m_hThreadAccept, m_hThreadConnManage;
 	HANDLE m_hThreadRecv[MAX_RECVTHREAD];
 	HANDLE m_hMutexBuf;
