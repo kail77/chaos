@@ -27,7 +27,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CFileTransClientDlg)
 	enum { IDD = IDD_FILETRANSCLIENT };
-		// NOTE: the ClassWizard will add data members here
+	CProgressCtrl	m_prgsTransfer;
 	//}}AFX_DATA
 
 	// ClassWizard generated virtual function overrides
@@ -42,6 +42,7 @@ private:
 	int m_nState;
 	sockaddr_in m_addr;
 	char * m_pBuf;
+	BOOL m_bMemOnly;
 
 // Implementation
 protected:

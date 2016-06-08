@@ -12,7 +12,7 @@ TCP File Transfer service 文件传输服务端
 <length> 后面命令数据长度，一个字节，暂未使用
 
 <cmd>=U 上传
-  <param>=F, data='C:\Job\ab12.dat' 上传文件到服务器 Server ret: H 6 U B blocksize
+  <param>=F, data='C:\Job\ab12.dat,filesizeL,filesizeH' 上传文件到服务器 Server ret: H 6 U B blocksize
   客户端发送H0UD0,再发送数据块
 
 <cmd>=D 下载

@@ -29,6 +29,10 @@ using namespace std;
 #define MAX_POOLSIZE 65536	// max connections
 #define MAX_MEMBUFS	64	// max number of mem buffer
 
+#define MEMSTAT_EMPTY	0
+#define MEMSTAT_IDLE	1
+#define MEMSTAT_USED	2
+
 #define FLAG_UP		0x0001
 #define FLAG_DOWN	0x0002
 #define FLAG_DATA	0x0004 // receiving data
@@ -43,7 +47,7 @@ typedef struct ClientInfo
 	HANDLE hFile;
 	char cmdBuf[CMDBUFSIZE];// cmd buf
 	char * pBlockBuf;// mem block buf in m_vBufs
-	int iBuf;	// index in m_vBufs, start from 1
+	int iBuf;	// index in m_arBufs
 } CLIENT_INFO;
 typedef vector<CLIENT_INFO> VEC_ClientInfo;
 //You may derive a class from CComModule and use it if you want to override
@@ -101,8 +105,9 @@ public:
 	HANDLE m_hThreadAccept, m_hThreadConnManage;
 	HANDLE m_hThreadRecv[MAX_RECVTHREAD];
 	HANDLE m_hMutexBuf;
-	vector<char *> m_vBufs;
-	BYTE m_bufState[MAX_MEMBUFS]; // mem is occupied or not
+	//vector<char *> m_vBufs;
+	BYTE m_bufState[MAX_MEMBUFS]; // mem state: 0=null, 1=idle, 2=used
+	LPSTR m_arBufs[MAX_MEMBUFS];
 	DWORD m_dwMainThreadID;
 };
 

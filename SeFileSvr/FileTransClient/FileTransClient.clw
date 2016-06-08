@@ -28,14 +28,14 @@ ImplementationFile=FileTransClientDlg.cpp
 Filter=D
 BaseClass=CDialog
 VirtualFilter=dWC
-LastObject=CFileTransClientDlg
+LastObject=IDC_PRGSTRANS
 
 
 
 [DLG:IDD_FILETRANSCLIENT]
 Type=1
 Class=CFileTransClientDlg
-ControlCount=14
+ControlCount=16
 Control1=IDC_STATIC,static,1342308352
 Control2=IDC_SERVER,edit,1350631552
 Control3=IDC_STATIC,static,1342308352
@@ -50,4 +50,6 @@ Control11=IDC_LOCALFILE,edit,1350631552
 Control12=IDC_BROWSER,button,1342242816
 Control13=IDC_INFO,static,1342308352
 Control14=IDCANCEL,button,1342242816
+Control15=IDC_PRGSTRANS,msctls_progress32,1350565888
+Control16=IDC_MEMONLY,button,1342242819
 

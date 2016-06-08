@@ -95,6 +95,10 @@ BEGIN
     PUSHBUTTON      "选择",IDC_BROWSER,263,29,50,14
     LTEXT           "info",IDC_INFO,25,93,200,8
     PUSHBUTTON      "取消",IDCANCEL,263,87,50,14
+    CONTROL         "Progress1",IDC_PRGSTRANS,"msctls_progress32",WS_BORDER,
+                    14,72,218,14
+    CONTROL         "不写文件测试",IDC_MEMONLY,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,249,53,64,10
 END
 
 

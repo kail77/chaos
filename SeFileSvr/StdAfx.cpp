@@ -8,6 +8,12 @@ int CServiceModule::InitSocketServer(void)
 	m_nConnTimeout = 100; // 10sec
 	m_nBlock = 8; // 8M
 	memset(m_bufState, 0, MAX_MEMBUFS);
+	memset(m_arBufs, 0, MAX_MEMBUFS*sizeof(LPSTR));
+
+	m_hMutexClientInfo = CreateMutex(NULL, FALSE, "Mu_FileSvr_Clients66");
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
+		return ERROR_ALREADY_EXISTS;
+	m_hMutexBuf = CreateMutex(NULL, FALSE, NULL);
 
 	int nStart = WSAStartup(MAKEWORD(2,2), &wd);//0=succ
 	if(nStart)
@@ -50,8 +56,6 @@ int CServiceModule::InitSocketServer(void)
 	m_vClientInfo.resize(CONNPOOLSIZE);
 	CLIENT_INFO *pClient = m_vClientInfo.begin();
 	memset(pClient, 0, sizeof(CLIENT_INFO)*CONNPOOLSIZE);
-	m_hMutexClientInfo = CreateMutex(NULL, FALSE, NULL);
-	m_hMutexBuf = CreateMutex(NULL, FALSE, NULL);
 	//nOpt = 16*1024;// send buffer
 	//setsockopt(m_sockServer, SOL_SOCKET, SO_SNDBUF, (const char *)&nOpt, sizeof(nOpt));
 	return 0;
@@ -69,15 +73,15 @@ void CServiceModule::FreeSocketServer(void)
 	closesocket(m_sockServer);
 	WSACleanup();
 	
-	vector<char *>::iterator itbuf;
-	for(itbuf = m_vBufs.begin(); itbuf!=m_vBufs.end(); itbuf++)
+	int i;
+	for(i=0; i<MAX_MEMBUFS; i++)
 	{
-		free(*itbuf);
+		if(m_bufState[i] > 0)
+			free(m_arBufs[i]);
 	}
-	m_vBufs.clear();
 
 	CloseHandle(m_hCompPort); // let Thread_Receiving-GetQueuedCompletionStatus() quit
-	for(int i=0; i<m_nRecvThread; i++)
+	for(i=0; i<m_nRecvThread; i++)
 	{
 		WaitForSingleObject(m_hThreadRecv[i], INFINITE);
 		CloseHandle(m_hThreadRecv[i]);
@@ -120,18 +124,17 @@ PSTR CServiceModule::GetMemFromPool(int &index)
 {
 	char * pbuf = NULL;
 	int i;
-	for(i=0; i<(int)m_vBufs.size(); i++)
+	for(i=0; i<MAX_MEMBUFS && m_bufState[i]>0; i++)
 	{
-		if(m_bufState[i] == 0)
+		if(m_bufState[i] == MEMSTAT_IDLE)
 		{
-			pbuf = m_vBufs[i];
-			m_bufState[i] = 1;
-			index = i+1;
+			pbuf = m_arBufs[i];
+			index = i;
 		}
 	}
 	if(pbuf)
 		return pbuf;
-	if(m_vBufs.size() >= MAX_MEMBUFS)
+	if(i == MAX_MEMBUFS)
 	{
 		OutputDebugString(_T("exceed max bufs\n"));
 		return NULL;
@@ -140,9 +143,8 @@ PSTR CServiceModule::GetMemFromPool(int &index)
 	if(pbuf)
 	{
 		WaitForSingleObject(m_hMutexBuf, INFINITE);
-		m_vBufs.push_back(pbuf);
-		index = m_vBufs.size();
-		m_bufState[index-1] = 1;
+		m_arBufs[i] = pbuf;
+		index = i;
 		ReleaseMutex(m_hMutexBuf);
 	} else
 	{
@@ -155,8 +157,10 @@ void CServiceModule::ClearClientConn(CLIENT_INFO *pClient)
 {
 	WaitForSingleObject(m_hMutexClientInfo, INFINITE);
 	//shutdown(pClient->sock, SD_BOTH);
+	_Module.LogEvent(_T("clear conn=%x:%d"), pClient->addr.sin_addr.S_un.S_addr, htons(pClient->addr.sin_port));
 	closesocket(pClient->sock);
-	m_bufState[pClient->iBuf-1] = 0;
+	if(pClient->pBlockBuf)
+		m_bufState[pClient->iBuf] = MEMSTAT_IDLE;
 	if(pClient->hFile)
 		CloseHandle(pClient->hFile);
 	memset(pClient, 0, sizeof(CLIENT_INFO));
@@ -220,6 +224,7 @@ unsigned long CServiceModule::Thread_Accepting(LPVOID pParam)
 			_Module.LogEvent(_T("sock accept failed=%d"), WSAGetLastError());
 			break;
 		}
+		_Module.LogEvent(_T("accept conn=%x:%d"), addr.sin_addr.S_un.S_addr, htons(addr.sin_port));
 		pClient = pServ->GetConnFromPool();
 		if(pClient == NULL)
 		{
@@ -241,10 +246,11 @@ unsigned long CServiceModule::Thread_Accepting(LPVOID pParam)
 unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 {
 	CServiceModule *pServ = (CServiceModule *)pParam;
+	VEC_ClientInfo::iterator it;
 	struct ClientInfo *pClient=NULL;
 	LPOVERLAPPED pOverlap=NULL;
 	DWORD dwRecv=0,dwFlag=0,dwThreadID,dwSize,dwHigh=0,cbData;
-	int i, bRecv=0, nBlockSize=pServ->m_nBlock*1024*1024;
+	int i=0, bRecv=0, nBlockSize=pServ->m_nBlock*1024*1024;
 	//char *pBuf;
 	TCHAR szText[256];
 	WSABUF wsaBuf;
@@ -267,9 +273,10 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				break;
 			}
 		}
-		if(dwRecv == 0) // client quit abnormally
+		if(dwRecv == 0) // client close or quit
 		{
 			OutputDebugString(_T("dwRecv == 0"));
+			pServ->ClearClientConn(pClient);
 			//closesocket(pClient->sock);
 			continue;
 		}
@@ -280,12 +287,12 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 		//	OutputDebugString(_T("error cmd"));
 		//	continue;
 		//}
-		if(pClient->hFile && pClient->nState&FLAG_DATA) // upload,write data
+		if(pClient->hFile && pClient->nState&FLAG_DATA && pClient->pBlockBuf) // upload,write data
 		{
 			pClient->nState &= ~FLAG_DATA;
 			pClient->cmdBuf[2] = 0; // receive next cmd
 			WriteFile(pClient->hFile, pClient->pBlockBuf, dwRecv, &cbData, NULL);
-			sprintf(szText, "%d", dwRecv);
+			sprintf(szText, "%u", dwRecv);
 			pServ->SendCmd(pClient->sock, 'U', 'D', szText, strlen(szText)+1);
 		}
 		wsaBuf.len = CMDBUFSIZE;
@@ -294,26 +301,45 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 		ZeroMemory(&pClient->overlap, sizeof(OVERLAPPED));
 		switch(pClient->cmdBuf[2])
 		{
+		case 'Q':	// qury status
+			dwSize = 0, dwHigh = 0;
+			for(it=pServ->m_vClientInfo.begin(); it!=pServ->m_vClientInfo.end(); it++)
+			{
+				if(it->sock)
+					dwSize++;
+			}
+			for(i=0; i<MAX_MEMBUFS; i++)
+			{
+				if(pServ->m_bufState[i] > 0)
+					dwHigh++;
+			}
+			sprintf(szText, "C%d,M%d", dwSize, dwHigh);
+			pServ->SendCmd(pClient->sock, 'Q', '0', szText, strlen(szText)+1);
+			break;
 		case 'U':	// upload
 			pClient->nState = FLAG_UP;
 			if(pClient->cmdBuf[3]=='F' && !pClient->hFile)
 			{
+				sscanf(pClient->cmdBuf+4, "%u,%u,%s", &dwSize, &dwHigh, szText);
 				// TODO: file already exist
-				pClient->hFile = CreateFile(pClient->cmdBuf+4, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, NULL,NULL);
+				pClient->hFile = CreateFile(szText, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, NULL,NULL);
 				if(pClient->hFile == INVALID_HANDLE_VALUE)
 					pClient->hFile = NULL;
 				if(pClient->hFile && !pClient->pBlockBuf)
-				{
 					pClient->pBlockBuf = pServ->GetMemFromPool(i);
-					pClient->iBuf = i;
-				}
+
 				if(pClient->pBlockBuf)
 				{
+					pClient->iBuf = i;
+					pServ->m_bufState[i] = MEMSTAT_USED;
 					sprintf(szText, "%d,0,0", pServ->m_nBlock);
 					pServ->SendCmd(pClient->sock, 'U', 'B', szText, strlen(szText)+1);
+				} else // create file, or alloc mem fail
+				{
+					pServ->SendCmd(pClient->sock, 'U', 'B', "0,0,0", 4);
 				}
 			}
-			if(pClient->cmdBuf[3]=='D') // data
+			if(pClient->cmdBuf[3]=='D' && pClient->pBlockBuf) // data
 			{
 				pClient->nState |= FLAG_DATA;
 				pClient->index = atoi(pClient->cmdBuf+4);//TODO: check index
@@ -325,7 +351,7 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 			pClient->nState = FLAG_DOWN;
 			if(pClient->cmdBuf[3]=='F' && !pClient->hFile)
 			{
-				dwSize = 0;
+				dwSize = 0, dwHigh = 0;
 				pClient->hFile = CreateFile(pClient->cmdBuf+4, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL,NULL);
 				if(pClient->hFile == INVALID_HANDLE_VALUE)
 					pClient->hFile = NULL;
@@ -333,16 +359,16 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				{
 					pClient->pBlockBuf = pServ->GetMemFromPool(i);
 					pClient->iBuf = i;
+					pServ->m_bufState[i] = MEMSTAT_USED;
 					dwSize = GetFileSize(pClient->hFile, &dwHigh);
 				}
 				if(pClient->pBlockBuf)
-				{
-					sprintf(szText, "%d,%d,%d", pServ->m_nBlock, dwSize, dwHigh);
-					pServ->SendCmd(pClient->sock, 'D', 'F', szText, strlen(szText)+1);
-					// TODO:file not exist
-				}
+					sprintf(szText, "%d,%u,%u", pServ->m_nBlock, dwSize, dwHigh);
+				else // file not exist, or alloc mem failed
+					sprintf(szText, "%d,%u,%u", 0, dwSize, dwHigh);
+				pServ->SendCmd(pClient->sock, 'D', 'F', szText, strlen(szText)+1);
 			}
-			if(pClient->cmdBuf[3]=='D') // data
+			if(pClient->cmdBuf[3]=='D' && pClient->hFile && pClient->pBlockBuf) // data
 			{
 				dwSize = GetFileSize(pClient->hFile, NULL);
 				pClient->index = atoi(pClient->cmdBuf+4);//TODO: check index
@@ -356,11 +382,12 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 			pServ->SendCmd(pClient->sock, 'R', (char)('0'+i), NULL, 0);
 			break;
 		case 'C':	// close connection
+			pServ->SendCmd(pClient->sock, 'C', '0', NULL, 0);
 			pServ->ClearClientConn(pClient);
 			bRecv = 0;
-			pServ->SendCmd(pClient->sock, 'C', '0', NULL, 0);
 			break;
 		case 'E':	// exit service
+			OutputDebugString("Exit File Server by command H0E0\n");
 			pServ->SendCmd(pClient->sock, 'E', '0', NULL, 0);
 			PostThreadMessage(pServ->m_dwMainThreadID, WM_QUIT, 0, 0);
 			break;

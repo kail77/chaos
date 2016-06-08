@@ -348,12 +348,14 @@ void CServiceModule::Run()
 	m_dwMainThreadID = GetCurrentThreadId();
 	int nRet = InitSocketServer();
 	if(nRet != 0)
+	{
 		LogEvent(_T("InitSocketServer failed=%d"), nRet);
-
-	MSG	msg;
-	while (GetMessage(&msg,	0, 0, 0))
-		DispatchMessage(&msg);
-
+	} else
+	{
+		MSG	msg;
+		while (GetMessage(&msg,	0, 0, 0))
+			DispatchMessage(&msg);
+	}
 	FreeSocketServer();
 	_Module.RevokeClassObjects();
 

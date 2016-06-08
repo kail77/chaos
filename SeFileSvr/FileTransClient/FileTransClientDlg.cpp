@@ -27,7 +27,7 @@ void CFileTransClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CFileTransClientDlg)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
+	DDX_Control(pDX, IDC_PRGSTRANS, m_prgsTransfer);
 	//}}AFX_DATA_MAP
 }
 
@@ -52,9 +52,6 @@ BOOL CFileTransClientDlg::OnInitDialog()
 
 	WSADATA wd;
 	int nStart = WSAStartup(MAKEWORD(2,2), &wd);//0=succ
-	m_sockClient = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (INVALID_SOCKET == m_sockClient)
-		AfxMessageBox("create socket fail");
 	m_nState = 0;
 	m_hThreadTrans = NULL;
 	m_pBuf = (char*)malloc(8*1024*1024);
@@ -76,6 +73,8 @@ void CFileTransClientDlg::OnOK()
 	int n = GetCheckedRadioButton(IDC_UPLOAD, IDC_DOWNLOAD);
 	if(n == IDC_DOWNLOAD)
 		m_nState |= FLAG_DOWNLOAD;
+	m_prgsTransfer.SetStep(1);
+	m_bMemOnly = ((CButton*)GetDlgItem(IDC_MEMONLY))->GetCheck();
 
 	TCHAR szText[256];
 	GetDlgItemText(IDC_SERVER, szText, 256);
@@ -84,6 +83,10 @@ void CFileTransClientDlg::OnOK()
 	m_addr.sin_family = AF_INET;
 	m_addr.sin_port = htons(n);
 	m_addr.sin_addr.S_un.S_addr = inet_addr(szText);
+
+	m_sockClient = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (INVALID_SOCKET == m_sockClient)
+		AfxMessageBox("create socket fail");
 
 	if(SOCKET_ERROR==connect(m_sockClient, (SOCKADDR*)&m_addr, sizeof(sockaddr_in)))
 	{
@@ -114,58 +117,101 @@ unsigned long CFileTransClientDlg::Thread_Transfering(LPVOID pParam)
 		Sleep(1000);
 	}
 	pDlg->GetDlgItem(IDOK)->EnableWindow(TRUE);
+	pDlg->m_hThreadTrans = NULL;
 	OutputDebugString(_T("Exit Thread_Transfering\n"));
 	return 0;
 }
 
 int CFileTransClientDlg::TransFile(LPTSTR pServerFile, LPTSTR pLocalFile) 
 {
-	char szCmd[256]="H0UF", szBuf[256];
-	int nBlock,i,n,nBlockSize=8*1024*1024;
+	char szCmd[256], szBuf[256]={0}, *pbuf;
+	int nBlockM, nBlockSize=8*1024*1024;
+	int i,n,nTimes,nLeft,nSize;
 	DWORD dwSize,dwHigh,cbData;
-	HANDLE hFile;
+	HANDLE hFile = NULL;
+	LONGLONG lSize;
 
-	strcat(szCmd, pServerFile);
-	if(m_nState & FLAG_DOWNLOAD)
-		szCmd[2] = 'D';
-	else
-		szCmd[2] = 'U';
-	send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
-	Sleep(10);
-	recv(m_sockClient, szBuf, 256, 0);
-	OutputDebugString(szBuf);
-	szCmd[3] = 'D';
+	m_prgsTransfer.SetPos(0);
 	if(m_nState & FLAG_DOWNLOAD)
 	{
-		sscanf(szBuf+4, "%d,%d,%d", &nBlock, &dwSize, &dwHigh);
-		//TODO:check file size
-		for(i=0; i<=(int)(dwSize/nBlockSize); i++)
-		{
-			sprintf(szCmd, "H0DD%d", i);
-			send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
-			recv(m_sockClient, m_pBuf, nBlockSize, 0);
-			OutputDebugString(m_pBuf);
-		}
-		send(m_sockClient, "H0C0", 5, 0);
+		sprintf(szCmd, "H0DF%s", pServerFile);
 	} else // upload
 	{
 		hFile = CreateFile(pLocalFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL,NULL);
 		if(hFile == INVALID_HANDLE_VALUE)
 			return GetLastError();
-		dwSize = GetFileSize(hFile, &dwHigh);
-		sscanf(szBuf+4, "%d", &nBlock);
-		for(i=0; i<=(int)(dwSize/nBlockSize); i++)
+		GetFileSizeEx(hFile, (PLARGE_INTEGER)&lSize);
+		if(lSize == 0)
+			return -1;
+		sprintf(szCmd, "H0UF%u,%u,%s", lSize&0xffffffff, lSize>>32, pServerFile);
+	}
+	send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
+	Sleep(10);
+	n = recv(m_sockClient, szBuf, 256, 0);
+	if (szBuf[0] != 'H' || n == 0)
+	{
+		return -2;
+	}
+
+	szCmd[3] = 'D'; //data
+	if(m_nState & FLAG_DOWNLOAD)
+	{
+		sscanf(szBuf+4, "%d,%u,%u", &nBlockM, &dwSize, &dwHigh);
+		lSize = dwHigh;
+		lSize = (lSize<<32) + dwSize;
+		if(!m_bMemOnly)
+			hFile = CreateFile(pLocalFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, NULL,NULL);
+		if(hFile == INVALID_HANDLE_VALUE)
+			return GetLastError();
+		nTimes = (int)(lSize/nBlockSize) + ((lSize%nBlockSize)>0);
+		m_prgsTransfer.SetRange32(0, nTimes);
+		for(i=0; i<nTimes; i++)
 		{
-			sprintf(szCmd, "H0UD%d", i);
+			sprintf(szCmd, "H0DD%d", i);
 			send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
-			n = min(dwSize-i*nBlock, (DWORD)nBlockSize);
+			nLeft = nBlockSize;
+			if (i==nTimes-1 && (lSize%nBlockSize)>0)
+				nLeft = (int)(lSize % nBlockSize);
+			nSize = nLeft;
+			pbuf = m_pBuf;
+			while (nLeft > 0)
+			{
+				n = recv(m_sockClient, pbuf, nLeft, 0);
+				if(n == 0)
+				{
+					TRACE("recv %d bytes", n);
+					CloseHandle(hFile);
+					return -3;
+				}
+				nLeft -= n;
+				pbuf += n;
+			}
+			if(!m_bMemOnly)
+				WriteFile(hFile, m_pBuf, nSize, &cbData, NULL);
+			m_prgsTransfer.StepIt();
+		}
+		send(m_sockClient, "H0C0", 5, 0);
+	} else // upload
+	{
+		sscanf(szBuf+4, "%d", &nBlockM);
+		nTimes = (int)(lSize/nBlockSize) + ((lSize%nBlockSize)>0);
+		m_prgsTransfer.SetRange32(0, nTimes);
+		for(i=0; i<nTimes; i++)
+		{
+			sprintf(szCmd, "H0UD%d", i); // upload data #
+			send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
+			n = min(lSize-i*nBlockSize, nBlockSize);
 			ReadFile(hFile, m_pBuf, n, &cbData, NULL);
 			send(m_sockClient, m_pBuf, n, 0);
 			recv(m_sockClient, szBuf, 256, 0);
-			OutputDebugString(szBuf);
+			m_prgsTransfer.StepIt();
 		}
-		send(m_sockClient, "H0C0", 5, 0);
+		send(m_sockClient, "H0C0", 5, 0); // tell server to close connection
 	}
+	shutdown(m_sockClient, SD_BOTH);
+	closesocket(m_sockClient);
+	if(hFile)
+		CloseHandle(hFile);
 	return 0;
 }
 
