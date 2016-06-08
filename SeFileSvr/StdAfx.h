@@ -35,7 +35,7 @@ using namespace std;
 
 #define FLAG_UP		0x0001
 #define FLAG_DOWN	0x0002
-#define FLAG_DATA	0x0004 // receiving data
+//#define FLAG_DATA	0x0004 // receiving data
 typedef struct ClientInfo
 {
 	sockaddr_in addr;//client address
@@ -44,6 +44,7 @@ typedef struct ClientInfo
 	int nState;
 	DWORD lastActTick; // last active time(tick)
 	int index;	// index of upload/download
+	int nSaveSize;	// bytes saved(upload)
 	HANDLE hFile;
 	char cmdBuf[CMDBUFSIZE];// cmd buf
 	char * pBlockBuf;// mem block buf in m_vBufs

@@ -273,11 +273,10 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				break;
 			}
 		}
-		if(dwRecv == 0) // client close or quit
+		if(dwRecv == 0) // client socket closed
 		{
 			OutputDebugString(_T("dwRecv == 0"));
 			pServ->ClearClientConn(pClient);
-			//closesocket(pClient->sock);
 			continue;
 		}
 		pClient->lastActTick = GetTickCount();
@@ -287,21 +286,28 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 		//	OutputDebugString(_T("error cmd"));
 		//	continue;
 		//}
-		if(pClient->hFile && pClient->nState&FLAG_DATA && pClient->pBlockBuf) // upload,write data
-		{
-			pClient->nState &= ~FLAG_DATA;
-			pClient->cmdBuf[2] = 0; // receive next cmd
-			WriteFile(pClient->hFile, pClient->pBlockBuf, dwRecv, &cbData, NULL);
-			sprintf(szText, "%u", dwRecv);
-			pServ->SendCmd(pClient->sock, 'U', 'D', szText, strlen(szText)+1);
-		}
+		bRecv = 1;
 		wsaBuf.len = CMDBUFSIZE;
 		wsaBuf.buf = pClient->cmdBuf;
-		bRecv = 1;
 		ZeroMemory(&pClient->overlap, sizeof(OVERLAPPED));
+		if(pClient->hFile && pClient->nSaveSize>0 && pClient->pBlockBuf) // upload,write data
+		{
+			WriteFile(pClient->hFile, pClient->pBlockBuf, dwRecv, &cbData, NULL);
+			pClient->nSaveSize -= dwRecv;
+			if (pClient->nSaveSize > 0) // not finished
+			{
+				wsaBuf.len = nBlockSize;
+				wsaBuf.buf = pClient->pBlockBuf;
+			} else
+			{
+				sprintf(szText, "%u", pClient->index);
+				pServ->SendCmd(pClient->sock, 'U', 'D', szText, strlen(szText)+1);
+			}
+			pClient->cmdBuf[2] = 0; // receive next cmd
+		}
 		switch(pClient->cmdBuf[2])
 		{
-		case 'Q':	// qury status
+		case 'Q':	// query status
 			dwSize = 0, dwHigh = 0;
 			for(it=pServ->m_vClientInfo.begin(); it!=pServ->m_vClientInfo.end(); it++)
 			{
@@ -341,8 +347,8 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 			}
 			if(pClient->cmdBuf[3]=='D' && pClient->pBlockBuf) // data
 			{
-				pClient->nState |= FLAG_DATA;
-				pClient->index = atoi(pClient->cmdBuf+4);//TODO: check index
+				sscanf(pClient->cmdBuf+4, "%u,%u", &pClient->index, &pClient->nSaveSize);
+				//pClient->index = atoi(pClient->cmdBuf+4);//TODO: check index
 				wsaBuf.len = nBlockSize;
 				wsaBuf.buf = pClient->pBlockBuf;
 			}
@@ -380,6 +386,14 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 		case 'R':	// remove file
 			i = DeleteFile(pClient->cmdBuf + 4);
 			pServ->SendCmd(pClient->sock, 'R', (char)('0'+i), NULL, 0);
+			break;
+		case 'F':	// finish transfer
+			if (pClient->hFile)
+			{
+				CloseHandle(pClient->hFile);
+				pClient->hFile = NULL;
+			}
+			pServ->SendCmd(pClient->sock, 'F', '0', NULL, 0);
 			break;
 		case 'C':	// close connection
 			pServ->SendCmd(pClient->sock, 'C', '0', NULL, 0);

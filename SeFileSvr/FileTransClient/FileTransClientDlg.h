@@ -10,8 +10,7 @@
 
 #include "Winsock2.h"
 
-#define FLAG_RUNNING	0X0001
-#define FLAG_DOWNLOAD	0X0002
+#define FLAG_DOWNLOAD	0X0001
 #define FLAG_CONNECT	0X0004
 /////////////////////////////////////////////////////////////////////////////
 // CFileTransClientDlg dialog
@@ -22,7 +21,8 @@ class CFileTransClientDlg : public CDialog
 public:
 	CFileTransClientDlg(CWnd* pParent = NULL);	// standard constructor
 	static unsigned long WINAPI Thread_Transfering(LPVOID pParam);
-	int TransFile(LPTSTR pServerFile, LPTSTR pLocalFile);
+	static int TransFile(SOCKET sock, int nState, LPTSTR pServerFile, LPTSTR pLocalFile, LPSTR pBuf);
+	static void UpdateProgress(int iPos);
 
 // Dialog Data
 	//{{AFX_DATA(CFileTransClientDlg)
@@ -37,7 +37,7 @@ public:
 	//}}AFX_VIRTUAL
 
 private:
-	SOCKET m_sockClient;
+	//SOCKET m_sockClient;
 	HANDLE m_hThreadTrans;
 	int m_nState;
 	sockaddr_in m_addr;
@@ -53,7 +53,6 @@ protected:
 	virtual BOOL OnInitDialog();
 	virtual void OnOK();
 	virtual void OnCancel();
-	afx_msg void OnBrowser();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

@@ -11,6 +11,8 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+#define MAX_BLOCKM 8 // 分块最大8M内存
+
 /////////////////////////////////////////////////////////////////////////////
 // CFileTransClientDlg dialog
 
@@ -33,7 +35,6 @@ void CFileTransClientDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CFileTransClientDlg, CDialog)
 	//{{AFX_MSG_MAP(CFileTransClientDlg)
-	ON_BN_CLICKED(IDC_BROWSER, OnBrowser)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -54,14 +55,9 @@ BOOL CFileTransClientDlg::OnInitDialog()
 	int nStart = WSAStartup(MAKEWORD(2,2), &wd);//0=succ
 	m_nState = 0;
 	m_hThreadTrans = NULL;
-	m_pBuf = (char*)malloc(8*1024*1024);
+	m_pBuf = NULL;
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
-}
-
-void CFileTransClientDlg::OnBrowser() 
-{
-	
 }
 
 void CFileTransClientDlg::OnOK() 
@@ -69,11 +65,10 @@ void CFileTransClientDlg::OnOK()
 	unsigned long dwID;
 
 	GetDlgItem(IDOK)->EnableWindow(FALSE);
-	m_nState = FLAG_RUNNING;
 	int n = GetCheckedRadioButton(IDC_UPLOAD, IDC_DOWNLOAD);
+	m_nState = 0;
 	if(n == IDC_DOWNLOAD)
 		m_nState |= FLAG_DOWNLOAD;
-	m_prgsTransfer.SetStep(1);
 	m_bMemOnly = ((CButton*)GetDlgItem(IDC_MEMONLY))->GetCheck();
 
 	TCHAR szText[256];
@@ -84,17 +79,6 @@ void CFileTransClientDlg::OnOK()
 	m_addr.sin_port = htons(n);
 	m_addr.sin_addr.S_un.S_addr = inet_addr(szText);
 
-	m_sockClient = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (INVALID_SOCKET == m_sockClient)
-		AfxMessageBox("create socket fail");
-
-	if(SOCKET_ERROR==connect(m_sockClient, (SOCKADDR*)&m_addr, sizeof(sockaddr_in)))
-	{
-		sprintf(szText, "connect error=%d\n", WSAGetLastError());
-		AfxMessageBox(szText);
-		return;
-	}
-
 	if(m_hThreadTrans == NULL)
 		m_hThreadTrans = CreateThread(NULL,0, Thread_Transfering, this, 0,&dwID);
 	if(m_hThreadTrans == NULL)
@@ -104,36 +88,66 @@ void CFileTransClientDlg::OnOK()
 
 unsigned long CFileTransClientDlg::Thread_Transfering(LPVOID pParam)
 {
-	TCHAR szServerFile[256],szLocalFile[256];
-	char szCmd[256]="H0UF";
+	TCHAR szServerFile[256],szLocalFile[256],szText[256];
 	CFileTransClientDlg *pDlg = (CFileTransClientDlg *)pParam;
 	OutputDebugString(_T("Enter Thread_Transfering\n"));
 
 	pDlg->GetDlgItemText(IDC_SERVERFILE, szServerFile, 256);
 	pDlg->GetDlgItemText(IDC_LOCALFILE, szLocalFile, 256);
+
+	SOCKET sockClient = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (INVALID_SOCKET == sockClient)
+		AfxMessageBox("create socket fail");
+
+	if(SOCKET_ERROR==connect(sockClient, (SOCKADDR*)&pDlg->m_addr, sizeof(sockaddr_in)))
+	{
+		sprintf(szText, "connect error=%d\n", WSAGetLastError());
+		AfxMessageBox(szText);
+		return 0;
+	}
+	if (!pDlg->m_pBuf)
+		pDlg->m_pBuf = (char*)malloc(MAX_BLOCKM*1024*1024);
+
 	//while (pDlg->m_nState & FLAG_RUNNING)
 	{
-		pDlg->TransFile(szServerFile, szLocalFile);
+		pDlg->m_prgsTransfer.SetPos(0);
+		pDlg->m_prgsTransfer.SetRange32(0, 100);
+		pDlg->TransFile(sockClient, pDlg->m_nState, szServerFile, szLocalFile, pDlg->m_pBuf);
 		Sleep(1000);
 	}
+	send(sockClient, "H0C0", 5, 0); // tell server to close connection
+	shutdown(sockClient, SD_BOTH);
+	closesocket(sockClient);
+
 	pDlg->GetDlgItem(IDOK)->EnableWindow(TRUE);
 	pDlg->m_hThreadTrans = NULL;
 	OutputDebugString(_T("Exit Thread_Transfering\n"));
 	return 0;
 }
-
-int CFileTransClientDlg::TransFile(LPTSTR pServerFile, LPTSTR pLocalFile) 
+// iPos: 0~100
+void CFileTransClientDlg::UpdateProgress(int iPos)
 {
-	char szCmd[256], szBuf[256]={0}, *pbuf;
-	int nBlockM, nBlockSize=8*1024*1024;
-	int i,n,nTimes,nLeft,nSize;
-	DWORD dwSize,dwHigh,cbData;
-	HANDLE hFile = NULL;
-	LONGLONG lSize;
+	CFileTransClientDlg *pDlg = (CFileTransClientDlg *)AfxGetApp()->GetMainWnd();
+	pDlg->m_prgsTransfer.SetPos(iPos);
+}
 
-	m_prgsTransfer.SetPos(0);
-	if(m_nState & FLAG_DOWNLOAD)
+int CFileTransClientDlg::TransFile(SOCKET sock, int nState, LPTSTR pServerFile, LPTSTR pLocalFile, LPSTR pBuf) 
+{
+	char szCmd[256], szBuf[256]={0};
+	int nBlockM=MAX_BLOCKM, nBlockSize=MAX_BLOCKM*1024*1024;
+	int i,n,nTimes,nLeft;
+	DWORD cbData, dwSize, dwHigh;
+	HANDLE hFile = NULL;
+	LONGLONG lSize,lSaved; // file size
+
+	if (!pServerFile || !pLocalFile)
+		return ERROR_INVALID_PARAMETER;
+
+	if(nState & FLAG_DOWNLOAD)
 	{
+		hFile = CreateFile(pLocalFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, NULL,NULL);
+		if(hFile == INVALID_HANDLE_VALUE)
+			return GetLastError();
 		sprintf(szCmd, "H0DF%s", pServerFile);
 	} else // upload
 	{
@@ -142,86 +156,95 @@ int CFileTransClientDlg::TransFile(LPTSTR pServerFile, LPTSTR pLocalFile)
 			return GetLastError();
 		GetFileSizeEx(hFile, (PLARGE_INTEGER)&lSize);
 		if(lSize == 0)
-			return -1;
-		sprintf(szCmd, "H0UF%u,%u,%s", lSize&0xffffffff, lSize>>32, pServerFile);
+		{
+			CloseHandle(hFile);
+			return ERROR_EMPTY;
+		}
+		sprintf(szCmd, "H0UF%u,%u,%s", (DWORD)(lSize&0xffffffff), (DWORD)(lSize>>32), pServerFile);
 	}
-	send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
+	send(sock, szCmd, 1+strlen(szCmd), 0);
 	Sleep(10);
-	n = recv(m_sockClient, szBuf, 256, 0);
-	if (szBuf[0] != 'H' || n == 0)
+	n = recv(sock, szBuf, 256, 0);
+	if (szBuf[0] != 'H' || n <= 0)
 	{
-		return -2;
+		CloseHandle(hFile);
+		return ERROR_BAD_COMMAND;
 	}
 
+	sscanf(szBuf+4, "%d,%u,%u", &nBlockM, &dwSize, &dwHigh);
+	if(nBlockM <= 0 || nBlockM > MAX_BLOCKM)
+		nBlockM = MAX_BLOCKM;
+	nBlockSize = nBlockM*1024*1024;
 	szCmd[3] = 'D'; //data
-	if(m_nState & FLAG_DOWNLOAD)
+	lSaved = 0;
+	if(nState & FLAG_DOWNLOAD)
 	{
-		sscanf(szBuf+4, "%d,%u,%u", &nBlockM, &dwSize, &dwHigh);
 		lSize = dwHigh;
 		lSize = (lSize<<32) + dwSize;
-		if(!m_bMemOnly)
-			hFile = CreateFile(pLocalFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, NULL,NULL);
-		if(hFile == INVALID_HANDLE_VALUE)
-			return GetLastError();
 		nTimes = (int)(lSize/nBlockSize) + ((lSize%nBlockSize)>0);
-		m_prgsTransfer.SetRange32(0, nTimes);
 		for(i=0; i<nTimes; i++)
 		{
 			sprintf(szCmd, "H0DD%d", i);
-			send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
+			send(sock, szCmd, 1+strlen(szCmd), 0);
 			nLeft = nBlockSize;
 			if (i==nTimes-1 && (lSize%nBlockSize)>0)
 				nLeft = (int)(lSize % nBlockSize);
-			nSize = nLeft;
-			pbuf = m_pBuf;
+			dwSize = nLeft;
+			char *pb = pBuf;
 			while (nLeft > 0)
 			{
-				n = recv(m_sockClient, pbuf, nLeft, 0);
-				if(n == 0)
+				n = recv(sock, pb, nLeft, 0);
+				if(n <= 0)
 				{
-					TRACE("recv %d bytes", n);
+					TRACE("recv failed: %d,err=%d", n, WSAGetLastError());
 					CloseHandle(hFile);
-					return -3;
+					return ERROR_CONNECTION_INVALID;
 				}
 				nLeft -= n;
-				pbuf += n;
+				pb += n;
+				lSaved += n;
+				UpdateProgress((int)(100*lSaved/lSize));
 			}
-			if(!m_bMemOnly)
-				WriteFile(hFile, m_pBuf, nSize, &cbData, NULL);
-			m_prgsTransfer.StepIt();
+			WriteFile(hFile, pBuf, dwSize, &cbData, NULL);
 		}
-		send(m_sockClient, "H0C0", 5, 0);
 	} else // upload
 	{
-		sscanf(szBuf+4, "%d", &nBlockM);
 		nTimes = (int)(lSize/nBlockSize) + ((lSize%nBlockSize)>0);
-		m_prgsTransfer.SetRange32(0, nTimes);
 		for(i=0; i<nTimes; i++)
 		{
-			sprintf(szCmd, "H0UD%d", i); // upload data #
-			send(m_sockClient, szCmd, 1+strlen(szCmd), 0);
-			n = min(lSize-i*nBlockSize, nBlockSize);
-			ReadFile(hFile, m_pBuf, n, &cbData, NULL);
-			send(m_sockClient, m_pBuf, n, 0);
-			recv(m_sockClient, szBuf, 256, 0);
-			m_prgsTransfer.StepIt();
+			nLeft = nBlockSize;
+			if (i==nTimes-1 && (lSize%nBlockSize)>0)
+				nLeft = (int)(lSize % nBlockSize);
+			sprintf(szCmd, "H0UD%d,%d", i, nLeft); // upload data #
+			send(sock, szCmd, 1+strlen(szCmd), 0);
+			Sleep(10);
+			ReadFile(hFile, pBuf, nLeft, &cbData, NULL);
+			n = send(sock, pBuf, nLeft, 0); // will return immediately 
+			if(n <= 0)
+			{
+				TRACE("send failed: %d,err=%d", n, WSAGetLastError());
+				CloseHandle(hFile);
+				return ERROR_CONNECTION_ABORTED;
+			}
+			lSaved += n;
+			recv(sock, szBuf, 256, 0);
+			UpdateProgress((int)(100*lSaved/lSize));
+			Sleep(10);
 		}
-		send(m_sockClient, "H0C0", 5, 0); // tell server to close connection
 	}
-	shutdown(m_sockClient, SD_BOTH);
-	closesocket(m_sockClient);
 	if(hFile)
 		CloseHandle(hFile);
+	send(sock, "H0F0", 5, 0); // finish file transfer
 	return 0;
 }
 
 void CFileTransClientDlg::OnCancel() 
 {
 	m_nState = 0;
-	shutdown(m_sockClient, SD_BOTH);
-	closesocket(m_sockClient);
 	WSACleanup();
-	WaitForSingleObject(m_hThreadTrans, INFINITE);
-	free(m_pBuf);
+	if(m_hThreadTrans)
+		WaitForSingleObject(m_hThreadTrans, INFINITE);
+	if(m_pBuf)
+		free(m_pBuf);
 	CDialog::OnCancel();
 }
