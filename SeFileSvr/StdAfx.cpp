@@ -4,9 +4,10 @@ int CServiceModule::InitSocketServer(void)
 {
 	WSADATA wd = {0};
 	// load params from xml
-	m_wPort = 5500;//PORT_FILESVR;
-	m_nConnTimeout = 100; // 10sec
-	m_nBlock = 8; // 8M
+	TCHAR szFile[256]="SeFileSvr.ini";
+	m_wPort = (WORD)GetPrivateProfileInt("Config", "Port", 15500, szFile);
+	m_nConnTimeout = GetPrivateProfileInt("Config", "ConnTimeout", 100, szFile);// sec
+	m_nBlock = GetPrivateProfileInt("Config", "Block", 8, szFile); // M
 	memset(m_bufState, 0, MAX_MEMBUFS);
 	memset(m_arBufs, 0, MAX_MEMBUFS*sizeof(LPSTR));
 
@@ -136,7 +137,7 @@ PSTR CServiceModule::GetMemFromPool(int &index)
 		return pbuf;
 	if(i == MAX_MEMBUFS)
 	{
-		OutputDebugString(_T("exceed max bufs\n"));
+		m_log.Output(LOG_ERROR, _T("exceed max bufs\n"));
 		return NULL;
 	}
 	pbuf = (char*)malloc(m_nBlock*1024*1024);
@@ -148,7 +149,7 @@ PSTR CServiceModule::GetMemFromPool(int &index)
 		ReleaseMutex(m_hMutexBuf);
 	} else
 	{
-		OutputDebugString(_T("alloc failed\n"));
+		m_log.Output(LOG_ERROR, _T("alloc failed\n"));
 	}
 	return pbuf;
 }
@@ -157,7 +158,7 @@ void CServiceModule::ClearClientConn(CLIENT_INFO *pClient)
 {
 	WaitForSingleObject(m_hMutexClientInfo, INFINITE);
 	//shutdown(pClient->sock, SD_BOTH);
-	_Module.LogEvent(_T("clear conn=%x:%d"), pClient->addr.sin_addr.S_un.S_addr, htons(pClient->addr.sin_port));
+	m_log.Output(LOG_INFO, _T("clear conn=%s:%d"), inet_ntoa(pClient->addr.sin_addr), htons(pClient->addr.sin_port));
 	closesocket(pClient->sock);
 	if(pClient->pBlockBuf)
 		m_bufState[pClient->iBuf] = MEMSTAT_IDLE;
@@ -183,7 +184,7 @@ unsigned long CServiceModule::Thread_ConnManage(LPVOID pParam)
 {
 	CServiceModule *pServ = (CServiceModule *)pParam;
 	DWORD dwNow=0;
-	OutputDebugString(_T("Enter Thread_ConnManage\n"));
+	pServ->m_log.Output(LOG_INFO, _T("Enter Thread_ConnManage\n"));
 	VEC_ClientInfo::iterator it;
 	
 
@@ -194,13 +195,12 @@ unsigned long CServiceModule::Thread_ConnManage(LPVOID pParam)
 		{
 			if(it->sock && dwNow-it->lastActTick>(DWORD)pServ->m_nConnTimeout*1000)
 			{
-				OutputDebugString(_T("close conn"));
 				pServ->ClearClientConn(it);
 			}
 		}
 		Sleep(1000);
 	}
-	OutputDebugString(_T("Exit Thread_ConnManage"));
+	pServ->m_log.Output(LOG_INFO, _T("Exit Thread_ConnManage"));
 	return 0;
 }
 
@@ -211,7 +211,7 @@ unsigned long CServiceModule::Thread_Accepting(LPVOID pParam)
 	SOCKET sockClient;
 	sockaddr_in addr;
 
-	OutputDebugString(_T("Enter Thread_Accepting\n"));
+	pServ->m_log.Output(LOG_INFO, _T("Enter Thread_Accepting\n"));
 	DWORD dwRecv=0, dwFlag=0;
 	WSABUF wsaBuf;
 	wsaBuf.len = CMDBUFSIZE;
@@ -221,14 +221,14 @@ unsigned long CServiceModule::Thread_Accepting(LPVOID pParam)
 		sockClient = accept(pServ->m_sockServer, (SOCKADDR*)&addr, &nLen);
 		if(SOCKET_ERROR == sockClient)
 		{
-			_Module.LogEvent(_T("sock accept failed=%d"), WSAGetLastError());
+			pServ->m_log.Output(LOG_ERROR, _T("sock accept failed=%d"), WSAGetLastError());
 			break;
 		}
-		_Module.LogEvent(_T("accept conn=%x:%d"), addr.sin_addr.S_un.S_addr, htons(addr.sin_port));
+		pServ->m_log.Output(LOG_INFO, _T("accept conn=%x:%d"), addr.sin_addr.S_un.S_addr, htons(addr.sin_port));
 		pClient = pServ->GetConnFromPool();
 		if(pClient == NULL)
 		{
-			_Module.LogEvent(_T("too many connections"));
+			pServ->m_log.Output(LOG_ERROR, _T("too many connections"));
 			continue;
 		}
 		pClient->sock = sockClient;
@@ -239,7 +239,7 @@ unsigned long CServiceModule::Thread_Accepting(LPVOID pParam)
 		wsaBuf.buf = pClient->cmdBuf;
 		WSARecv(pClient->sock, &wsaBuf, 1, &dwRecv, &dwFlag, &pClient->overlap, NULL);
 	}
-	OutputDebugString(_T("Exit Thread_Accepting"));
+	pServ->m_log.Output(LOG_INFO, _T("Exit Thread_Accepting"));
 	return 0;
 }
 
@@ -256,9 +256,10 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 	WSABUF wsaBuf;
 
 	dwThreadID = GetCurrentThreadId();
-	_stprintf(szText, _T("Enter Thread_Receiving:%d\n"), dwThreadID);
-	OutputDebugString(szText);
+	pServ->m_log.Output(LOG_INFO, _T("Enter Thread_Receiving:%d\n"), dwThreadID);
 	while (_Module.m_status.dwCurrentState == SERVICE_RUNNING)
+	{
+	try
 	{
 		if(!GetQueuedCompletionStatus(pServ->m_hCompPort, &dwRecv, (PULONG_PTR)&pClient, &pOverlap, 3000))
 		{
@@ -269,23 +270,23 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				continue;
 			} else //ERROR_INVALID_HANDLE
 			{
-				_Module.LogEvent(_T("GetQueuedCompletionStatus:=%d"), GetLastError());
+				pServ->m_log.Output(LOG_ERROR, _T("GetQueuedCompletionStatus:=%d"), GetLastError());
 				break;
 			}
 		}
 		if(dwRecv == 0) // client socket closed
 		{
-			OutputDebugString(_T("dwRecv == 0"));
+			pServ->m_log.Output(LOG_INFO, _T("Recv=0, closed"));
 			pServ->ClearClientConn(pClient);
 			continue;
 		}
 		pClient->lastActTick = GetTickCount();
-		OutputDebugStringA(pClient->cmdBuf);
-		//if(!pClient->hFile && pClient->cmdBuf[0] !='H')
-		//{
-		//	OutputDebugString(_T("error cmd"));
-		//	continue;
-		//}
+		pServ->m_log.Output(LOG_DEBUG, pClient->cmdBuf);
+		if(pClient->nSaveSize==0 && pClient->cmdBuf[0] !='H')
+		{
+			pServ->m_log.Output(LOG_WARN, _T("error cmd:%x-%x-%x"), pClient->cmdBuf[0],pClient->cmdBuf[1],pClient->cmdBuf[2]);
+			continue;
+		}
 		bRecv = 1;
 		wsaBuf.len = CMDBUFSIZE;
 		wsaBuf.buf = pClient->cmdBuf;
@@ -401,7 +402,7 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 			bRecv = 0;
 			break;
 		case 'E':	// exit service
-			OutputDebugString("Exit File Server by command H0E0\n");
+			pServ->m_log.Output(LOG_INFO, "Exit File Server by command H0E0\n");
 			pServ->SendCmd(pClient->sock, 'E', '0', NULL, 0);
 			PostThreadMessage(pServ->m_dwMainThreadID, WM_QUIT, 0, 0);
 			break;
@@ -411,8 +412,14 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 		ZeroMemory(&pClient->cmdBuf, CMDBUFSIZE);
 		if(bRecv)
 			WSARecv(pClient->sock, &wsaBuf, 1, &dwRecv, &dwFlag, &pClient->overlap, NULL);
+	}// try
+	catch (CException* e)
+	{
+		e->GetErrorMessage(szText, 256);
+		_Module.LogEvent("Exception-Thread_Recieiving:%s", szText);
+		Sleep(5000);
 	}
-	_stprintf(szText, _T("Exit Thread_Receiving:%d\n"), dwThreadID);
-	OutputDebugString(szText);
+	}// while SERVICE_RUNNING
+	pServ->m_log.Output(LOG_INFO, _T("Exit Thread_Receiving:%d\n"), dwThreadID);
 	return 0;
 }

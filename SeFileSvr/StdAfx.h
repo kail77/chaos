@@ -21,6 +21,7 @@
 #include <process.h>    // _beginthread, _endthread 
 #include <vector>
 using namespace std;
+#include "SeUtil.h"
 
 #define PORT_FILESVR 5500
 #define MAX_RECVTHREAD 64
@@ -110,6 +111,7 @@ public:
 	BYTE m_bufState[MAX_MEMBUFS]; // mem state: 0=null, 1=idle, 2=used
 	LPSTR m_arBufs[MAX_MEMBUFS];
 	DWORD m_dwMainThreadID;
+	CMsgLog m_log;
 };
 
 extern CServiceModule _Module;

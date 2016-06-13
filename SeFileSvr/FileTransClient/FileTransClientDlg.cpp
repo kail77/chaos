@@ -49,7 +49,7 @@ BOOL CFileTransClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 	CheckRadioButton(IDC_UPLOAD, IDC_DOWNLOAD, IDC_UPLOAD);
 	SetDlgItemText(IDC_SERVER, "127.0.0.1");
-	SetDlgItemInt(IDC_PORT, 5500);
+	SetDlgItemInt(IDC_PORT, 15500);
 
 	WSADATA wd;
 	int nStart = WSAStartup(MAKEWORD(2,2), &wd);//0=succ
