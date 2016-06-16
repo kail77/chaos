@@ -104,6 +104,8 @@ public:
 	int m_nRecvThread; // num of receiving thread
 	int m_nConnTimeout;	// connection timeout, in sec
 	int m_nBlock;	// up/down block size, in MB
+	int m_nDelay;	// delay ms between blocks
+	TCHAR m_szCurPath[MAX_PATH]; // c:\SecuPrint\APP
 	HANDLE m_hThreadAccept, m_hThreadConnManage;
 	HANDLE m_hThreadRecv[MAX_RECVTHREAD];
 	HANDLE m_hMutexBuf;

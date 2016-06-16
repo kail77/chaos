@@ -4,12 +4,19 @@ int CServiceModule::InitSocketServer(void)
 {
 	WSADATA wd = {0};
 	// load params from xml
-	TCHAR szFile[256]="SeFileSvr.ini";
+	TCHAR szFile[256];
+
+	GetModuleFileName(NULL, m_szCurPath, MAX_PATH);
+	*(_tcsrchr(m_szCurPath, '\\')) = 0;
+	_stprintf(szFile, _T("%s\\%s"), m_szCurPath, _T("SeFileSvr.ini"));
+
 	m_wPort = (WORD)GetPrivateProfileInt("Config", "Port", 15500, szFile);
 	m_nConnTimeout = GetPrivateProfileInt("Config", "ConnTimeout", 100, szFile);// sec
 	m_nBlock = GetPrivateProfileInt("Config", "Block", 8, szFile); // M
+	m_nDelay = GetPrivateProfileInt("Config", "Delay", 100, szFile); // ms
 	memset(m_bufState, 0, MAX_MEMBUFS);
 	memset(m_arBufs, 0, MAX_MEMBUFS*sizeof(LPSTR));
+	m_log.Output(LOG_INFO, "Port=%d,Timeout=%d,Block=%d,Delay=%d", m_wPort,m_nConnTimeout,m_nBlock,m_nDelay);
 
 	m_hMutexClientInfo = CreateMutex(NULL, FALSE, "Mu_FileSvr_Clients66");
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
@@ -301,6 +308,7 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				wsaBuf.buf = pClient->pBlockBuf;
 			} else
 			{
+				Sleep(pServ->m_nDelay);
 				sprintf(szText, "%u", pClient->index);
 				pServ->SendCmd(pClient->sock, 'U', 'D', szText, strlen(szText)+1);
 			}
@@ -309,7 +317,7 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 		switch(pClient->cmdBuf[2])
 		{
 		case 'Q':	// query status
-			dwSize = 0, dwHigh = 0;
+			dwSize = 0, dwHigh = 0, cbData = 0;
 			for(it=pServ->m_vClientInfo.begin(); it!=pServ->m_vClientInfo.end(); it++)
 			{
 				if(it->sock)
@@ -319,8 +327,10 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 			{
 				if(pServ->m_bufState[i] > 0)
 					dwHigh++;
+				if(pServ->m_bufState[i] == MEMSTAT_USED)
+					cbData++;
 			}
-			sprintf(szText, "C%d,M%d", dwSize, dwHigh);
+			sprintf(szText, "C%d,M%d,U%d", dwSize, dwHigh, cbData);
 			pServ->SendCmd(pClient->sock, 'Q', '0', szText, strlen(szText)+1);
 			break;
 		case 'U':	// upload
@@ -381,6 +391,7 @@ unsigned long CServiceModule::Thread_Receiving(LPVOID pParam)
 				pClient->index = atoi(pClient->cmdBuf+4);//TODO: check index
 				dwSize = min((int)dwSize-pClient->index*nBlockSize, nBlockSize);
 				ReadFile(pClient->hFile, pClient->pBlockBuf, dwSize, &cbData, NULL);
+				Sleep(pServ->m_nDelay);
 				send(pClient->sock, pClient->pBlockBuf, cbData, 0);
 			}
 			break;

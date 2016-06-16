@@ -116,6 +116,7 @@ unsigned long CFileTransClientDlg::Thread_Transfering(LPVOID pParam)
 		Sleep(1000);
 	}
 	send(sockClient, "H0C0", 5, 0); // tell server to close connection
+	recv(sockClient, szText, 256, 0);
 	shutdown(sockClient, SD_BOTH);
 	closesocket(sockClient);
 
@@ -131,26 +132,37 @@ void CFileTransClientDlg::UpdateProgress(int iPos)
 	pDlg->m_prgsTransfer.SetPos(iPos);
 }
 
+/// <summary>upload or download file to/from server </summary>
+/// <param name="sock">IN socket already connected</param>
+/// <param name="nState">IN 0=upload, 1=download</param>
+/// <param name="pServerFile">IN "d:\xx\up1.dat"</param>
+/// <param name="pLocalFile">IN "c:\xx\local1.dat"</param>
+/// <param name="pBuf">IN membuf already alloced</param>
+/// <returns>0=success, or error code</returns>
 int CFileTransClientDlg::TransFile(SOCKET sock, int nState, LPTSTR pServerFile, LPTSTR pLocalFile, LPSTR pBuf) 
 {
-	char szCmd[256], szBuf[256]={0};
+	char szCmd[256], szBuf[256]={0}, szFile[MAX_PATH], *pszFile=szFile;
 	int nBlockM=MAX_BLOCKM, nBlockSize=MAX_BLOCKM*1024*1024;
 	int i,n,nTimes,nLeft;
 	DWORD cbData, dwSize, dwHigh;
 	HANDLE hFile = NULL;
 	LONGLONG lSize,lSaved; // file size
 
-	if (!pServerFile || !pLocalFile)
+	if (!pServerFile || !pLocalFile || !pBuf)
 		return ERROR_INVALID_PARAMETER;
-
+#ifdef _UNICODE
+	WideCharToMultiByte(CP_ACP,0, pServerFile,-1, szFile,MAX_PATH, NULL,NULL);
+#else
+	pszFile = pServerFile;
+#endif
 	if(nState & FLAG_DOWNLOAD)
-	{
+	{	// TODO:continue last downloading
 		hFile = CreateFile(pLocalFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, NULL,NULL);
 		if(hFile == INVALID_HANDLE_VALUE)
 			return GetLastError();
-		sprintf(szCmd, "H0DF%s", pServerFile);
+		sprintf(szCmd, "H0DF%s", pszFile);
 	} else // upload
-	{
+	{	// TODO:continue last uploading
 		hFile = CreateFile(pLocalFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL,NULL);
 		if(hFile == INVALID_HANDLE_VALUE)
 			return GetLastError();
@@ -160,9 +172,15 @@ int CFileTransClientDlg::TransFile(SOCKET sock, int nState, LPTSTR pServerFile, 
 			CloseHandle(hFile);
 			return ERROR_EMPTY;
 		}
-		sprintf(szCmd, "H0UF%u,%u,%s", (DWORD)(lSize&0xffffffff), (DWORD)(lSize>>32), pServerFile);
+		sprintf(szCmd, "H0UF%u,%u,%s", (DWORD)(lSize&0xffffffff), (DWORD)(lSize>>32), pszFile);
 	}
-	send(sock, szCmd, 1+strlen(szCmd), 0);
+	n = send(sock, szCmd, 1+strlen(szCmd), 0);
+	if (n <= 0)
+	{
+		CloseHandle(hFile);
+		TRACE("send failed: %d", n);
+		return WSAGetLastError();
+	}
 	Sleep(10);
 	n = recv(sock, szBuf, 256, 0);
 	if (szBuf[0] != 'H' || n <= 0)
@@ -235,6 +253,7 @@ int CFileTransClientDlg::TransFile(SOCKET sock, int nState, LPTSTR pServerFile, 
 	if(hFile)
 		CloseHandle(hFile);
 	send(sock, "H0F0", 5, 0); // finish file transfer
+	recv(sock, szBuf, 256, 0);
 	return 0;
 }
 
