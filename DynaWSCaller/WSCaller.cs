@@ -18,6 +18,7 @@ using System.Web.Services.Description;
 using System.Web.Services.Protocols;
 using System.Xml.Serialization;
 using System.Xml;
+using System.Text.RegularExpressions;
 
 namespace DynaWSCaller
 {
@@ -219,7 +220,8 @@ namespace DynaWSCaller
 			string sXmlParam = null;
 			if (_paramInfos.Length > 0)
 			{
-				string[] strParams = textParams.Text.Split(',');
+				//string[] strParams = textParams.Text.Split(',');
+				string[] strParams = Regex.Split(textParams.Text, "\r\n");
 				if (strParams.Length != _paramInfos.Length)
 				{
 					MessageBox.Show("params count should be:" + _paramInfos.Length);

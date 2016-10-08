@@ -187,6 +187,7 @@
 			this.cbFunction.Location = new System.Drawing.Point(103, 111);
 			this.cbFunction.Name = "cbFunction";
 			this.cbFunction.Size = new System.Drawing.Size(569, 24);
+			this.cbFunction.Sorted = true;
 			this.cbFunction.TabIndex = 15;
 			this.cbFunction.SelectedIndexChanged += new System.EventHandler(this.cbFunction_SelectedIndexChanged);
 			// 
