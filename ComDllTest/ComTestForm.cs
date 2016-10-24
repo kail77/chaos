@@ -119,7 +119,9 @@ namespace ComTest
 				arObj = new object[sParams.Length];
 				for (int i = 0; i < sParams.Length; i++)
 				{
-					if (_paramInfos[i].ParameterType == typeof(int))
+					//if (_paramInfos[i].IsOut == true)
+					//	break;
+					if (_paramInfos[i].ParameterType.Name.Contains("Int32")) 
 					{
 						arObj[i] = Convert.ToInt32(sParams[i]);
 					}
@@ -151,7 +153,7 @@ namespace ComTest
 				tbRet.Text = oret.ToString();
 			for (int i = 0; i < _paramInfos.Length; i++)
 			{
-				if (_paramInfos[i].IsOut)
+				if (_paramInfos[i].IsOut && arObj[i] != null)
 				{
 					tbRet.Text += "\r\n";
 					tbRet.Text += arObj[i].ToString();
