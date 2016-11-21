@@ -28,14 +28,14 @@ ImplementationFile=CryptoTestDlg.cpp
 Filter=D
 BaseClass=CDialog
 VirtualFilter=dWC
-LastObject=IDC_CBBLOCKSIZE
+LastObject=IDC_CBCODEC
 
 
 
 [DLG:IDD_CRYPTOTEST]
 Type=1
 Class=CCryptoTestDlg
-ControlCount=20
+ControlCount=24
 Control1=IDOK,button,1342242817
 Control2=IDCANCEL,button,1342242816
 Control3=IDC_STATIC,static,1342308352
@@ -56,4 +56,8 @@ Control17=IDC_CBPADDING,combobox,1344339971
 Control18=IDC_STATIC,static,1342308352
 Control19=IDC_CBBLOCKSIZE,combobox,1344339971
 Control20=IDC_STATIC,static,1342308352
+Control21=IDC_CBCODEC,combobox,1344339971
+Control22=IDC_STATIC,static,1342308352
+Control23=IDC_DATABASE64,edit,1352732740
+Control24=IDC_STATIC,static,1342308352
 

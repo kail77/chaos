@@ -1562,8 +1562,7 @@ void CRijndael::Decrypt(char const* in, char* result, size_t n, int iMode)
 		}
 	}
 }
-
-
+/*
 void CRijndael::Char2Hex(unsigned char ch, char* szHex)
 {
 
@@ -1623,7 +1622,7 @@ void CRijndael::InitKeyIv(CRijndael &oRijndael)
 	HexStr2CharStr(pkeyhexstr,key,24);
 	oRijndael.MakeKey((char*)key, "0102030405060708", 24, 16);
 }
-/*
+
 void PaddingData2Block(std::string& str,char* szDataIn)
 {
 	int length=strlen(str.data());

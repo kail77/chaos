@@ -1,3 +1,7 @@
+//AES(Advanced Encryption Standard),在密码学中又称Rijndael加密法，是美国政府的一种区块加密标准。用来替代DES
+//密钥位数128/192/256,即对应密钥最多16/24/32字节。除了ECB模式外，CBC，CFB模式都有区块偏移向量IV,128bit=16Bytes
+//PKCS7 Padding: 用16的余数，将数据长度补齐为16的倍数
+
 //Rijndael.h
 #ifndef __RIJNDAEL_H__
 #define __RIJNDAEL_H__
@@ -23,7 +27,7 @@ public:
 
 	//Expand a user-supplied key material into a session key.
 	// key        - The 128/192/256-bit user-key to use.
-	// chain      - initial chain block for CBC and CFB modes.
+	// chain(IV)  - initial chain block for CBC and CFB modes.
 	// keylength  - 16, 24 or 32 bytes
 	// blockSize  - The block size in bytes of this Rijndael (16, 24 or 32 bytes).
 	void MakeKey(char const* key, char const* chain, int keylength=DEFAULT_BLOCK_SIZE, int blockSize=DEFAULT_BLOCK_SIZE);
@@ -39,7 +43,6 @@ public:
 	void DecryptBlock(char const* in, char* result);
 
 	void Encrypt(char const* in, char* result, size_t n, int iMode=ECB);
-	
 	void Decrypt(char const* in, char* result, size_t n, int iMode=ECB);
 
 	//Get Key Length
@@ -48,7 +51,7 @@ public:
 		if(false==m_bKeyInit)
 		{
 			//throw exception(sm_szErrorMsg1);
-		return m_keylength;
+			return m_keylength;
 		}
 	}
 
@@ -67,8 +70,8 @@ public:
 	{
 		if(false==m_bKeyInit)
 		{
-		  // throw exception(sm_szErrorMsg1);
-		   return m_iROUNDS;
+			// throw exception(sm_szErrorMsg1);
+			return m_iROUNDS;
 		}
 	}
 
@@ -81,13 +84,13 @@ public:
 	//static char const* sm_chain0;
 	//十六进制的字符串和char字符串的转化
 //	static void PaddingData2Block(std::string& str,char* szDataIn);
-	static void Char2Hex(unsigned char ch, char* szHex);
-	static void Hex2Char(char const* szHex, unsigned char& rch);
-	static void CharStr2HexStr(unsigned char const* pucCharStr, char* pszHexStr, int iSize);
-	static void HexStr2CharStr(char const* pszHexStr, unsigned char* pucCharStr, int iSize);
+//	static void Char2Hex(unsigned char ch, char* szHex);
+//	static void Hex2Char(char const* szHex, unsigned char& rch);
+//	static void CharStr2HexStr(unsigned char const* pucCharStr, char* pszHexStr, int iSize);
+//	static void HexStr2CharStr(char const* pszHexStr, unsigned char* pucCharStr, int iSize);
 //	static void EncryptString(std::string& str,std::string& result);
 	//初始化KEY和IV
-	static void InitKeyIv(CRijndael &oRijndael);
+//	static void InitKeyIv(CRijndael &oRijndael);
 	//填充数据
 
 private:

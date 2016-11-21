@@ -15,6 +15,8 @@
 #define IDC_DECRYPT                     1007
 #define IDC_CBPADDING                   1008
 #define IDC_CBBLOCKSIZE                 1009
+#define IDC_CBCODEC                     1010
+#define IDC_DATABASE64                  1011
 
 // Next default values for new objects
 // 

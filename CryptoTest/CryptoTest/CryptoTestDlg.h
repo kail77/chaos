@@ -28,6 +28,8 @@ public:
 	CString	m_sPWD;
 	int		m_nPadding;
 	int		m_nBlockSize;
+	int		m_nEncode;
+	CString	m_sBase64;
 	//}}AFX_DATA
 
 	// ClassWizard generated virtual function overrides
