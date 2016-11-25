@@ -8,3 +8,4 @@ CryptoTest: C++ Rijndael 源代码(AES只是其中的一个特例)
 
 注意CryptocsTest为UTF8编码
 
+SparseCode: 文件稀疏加密，对文件的内容部分加密，使其内容改变，不被识别。
