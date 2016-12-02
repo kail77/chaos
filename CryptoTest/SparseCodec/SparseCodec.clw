@@ -44,7 +44,7 @@ Class=CSparseCodecDlg
 [DLG:IDD_SPARSECODEC (English (U.S.))]
 Type=1
 Class=CSparseCodecDlg
-ControlCount=13
+ControlCount=14
 Control1=IDOK,button,1342242817
 Control2=IDCANCEL,button,1342242816
 Control3=IDC_OPENFILE,button,1342242816
@@ -58,4 +58,5 @@ Control10=IDC_KEY,edit,1350631552
 Control11=IDC_DESTFILE,button,1342242819
 Control12=IDC_DESTPATH,edit,1484849280
 Control13=IDC_PROGRESS,msctls_progress32,1350565888
+Control14=IDC_APPEND,button,1342242819
 

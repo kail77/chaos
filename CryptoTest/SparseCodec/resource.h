@@ -14,6 +14,7 @@
 #define IDC_DESTFILE                    1006
 #define IDC_DESTPATH                    1007
 #define IDC_PROGRESS                    1008
+#define IDC_APPEND                      1009
 
 // Next default values for new objects
 // 

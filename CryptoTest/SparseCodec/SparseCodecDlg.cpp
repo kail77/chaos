@@ -131,11 +131,31 @@ unsigned int CSparseCodecDlg::Thread_ProcessCodec(LPVOID pParam)
 		pDlg->GetDlgItemText(IDC_DESTPATH, szDest, MAX_PATH);
 		pszDest = szDest;
 	}
+	// add tail text
+	pBtn = (CButton *)pDlg->GetDlgItem(IDC_APPEND);
+	if (pBtn->GetCheck() && !strstr(szPath, ".enc")) // plain file
+	{
+		TCHAR szTail[1024];
+		pDlg->GetDlgItemText(IDC_COMMENT, szTail, 1024);
+		if(strlen(szTail) > 0)
+			pDlg->AddFileTail(szPath, (LPBYTE)szTail, strlen(szTail));
+	}
 	pDlg->GetDlgItemText(IDC_KEY, szKey, 64);
 	nStep = pDlg->GetDlgItemInt(IDC_STEP);
 	sprintf(szStep, "step=%d", nStep);
 	pDlg->SparseFileCodec(szPath, pszDest, szStep, szKey, CodecProgressProc);
 	pDlg->GetDlgItem(IDOK)->EnableWindow(TRUE);
+	return 0;
+}
+
+// add text(pszTail) at end of pszFile
+int CSparseCodecDlg::AddFileTail(LPTSTR pszFile, LPBYTE pszTail, int nLen)
+{
+	FILE *fp = fopen(pszFile, "a+");
+	if(!fp)
+		return -1;
+	fwrite(pszTail, nLen, 1, fp);
+	fclose(fp);
 	return 0;
 }
 

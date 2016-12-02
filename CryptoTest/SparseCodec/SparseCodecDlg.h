@@ -21,6 +21,7 @@ public:
 	CSparseCodecDlg(CWnd* pParent = NULL);	// standard constructor
 	int SparseFileCodec(char* pInFile, char* pOutFile, char* pParam, char* pKey, SparseCodecProgressProc pProgressProc);
 	static int CodecProgressProc(int iCur, int nTotal, LPVOID pParam);
+	int AddFileTail(LPTSTR pszFile, LPBYTE pszTail, int nLen);
 	static unsigned int __stdcall Thread_ProcessCodec(LPVOID pParam);	
 
 // Dialog Data
