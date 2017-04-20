@@ -67,7 +67,7 @@ void CSparseCodecDlg::OnDropFiles(HDROP hDropInfo)
 	CFile f(szPath, CFile::modeRead);
 	DWORD dwSize = f.GetLength();
 	CString sText;
-	sText.Format(_T("filesize:%d"), dwSize);
+	sText.Format(_T("filesize:%ud"), dwSize);
 	SetDlgItemText(IDC_INFO, sText);
 	CDialog::OnDropFiles(hDropInfo);
 }
@@ -188,7 +188,7 @@ int CSparseCodecDlg::SparseFileCodec(char* pInFile, char* pOutFile, char* pParam
 	fgetpos(fpIn, &fpos);
 
 	unsigned int i,j, dwSize,dwCRC, crcTbl[256], srcData[256]={0};
-	int nlen = strlen(pKey);
+	unsigned int nlen = strlen(pKey);
 #ifdef WIN32
 	dwSize = (DWORD)fpos;//.__pos;
 #else

@@ -230,7 +230,7 @@ namespace DynaWSCaller
 				arrObj = new object[strParams.Length];
 				for (int i = 0; i < strParams.Length; i++)
 				{
-					if (_paramInfos[i].ParameterType == typeof(int))
+					if (_paramInfos[i].ParameterType.Name.Contains("Int"))
 					{
 						arrObj[i] = Convert.ToInt32(strParams[i]);
 						sXmlParam += string.Format(@"<{0} xsi:type=""xsd:int"">{1}</{2}>",
