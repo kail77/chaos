@@ -15,7 +15,7 @@ namespace EmfView
 	{
 		private BinaryReader binaryReader = null;
 
-		//private DeviceMode deviceMode;
+		private DevMode _devmode = new DevMode();
 		private string _sFileName;
 		private int _iViewPage = 1;
 		private int _PageCount = 0;
@@ -31,10 +31,11 @@ namespace EmfView
 		private string _sDocName;
 		private int _nPageW, _nPageH; // page size in pixel
 		private int _nTmpFont = 0;
+		private int _nCutLength = 0;// roller cut length,in priv devmode
 		private float _DpiX, _DpiY;
 		private Point _ptDown;	// point of mouse down
 		private Point _ptOrg = new Point(0, 0);	// org of show image
-		private string[] _arTmpFont = new string[32];
+		private List<string> _lsTmpFonts = new List<string>();
 
 		[DllImport("gdi32")]
 		public static extern int CreateScalableFontResource(UInt32 fdwHidden, string lpszFontRes, string lpszFontFile, string lpszCurrentPath);
@@ -69,9 +70,11 @@ namespace EmfView
 				string sName = System.Text.Encoding.Unicode.GetString(ArrayInfoName);
 
 				int iLen = sName.Length;
-				if (sName.EndsWith(".tmp") && chkTempFont.Checked) // temp font
+				if (sName.EndsWith(".tmp")) // temp font
 				{
-					AddTempFont(ArrayInfo, sName);
+					if (chkTempFont.Checked)
+						AddTempFont(ArrayInfo, sName);
+					this._nTmpFont++;
 				}
 				if (sName.EndsWith(".SHD"))
 				{
@@ -90,13 +93,13 @@ namespace EmfView
 		} // ParseHeaderInfo
 		private void GetDevMode(byte[] arData)
 		{
-			DevMode devmode = new DevMode();
-			int nSize = Marshal.SizeOf(devmode);//unsafe 
+			int nSize = Marshal.SizeOf(_devmode);//unsafe 
 			int nPos = BitConverter.ToInt32(arData, 4);
 			IntPtr structPtr = Marshal.AllocHGlobal(nSize);
 			Marshal.Copy(arData, nPos, structPtr, nSize);
-			devmode = (DevMode)Marshal.PtrToStructure(structPtr, devmode.GetType());
+			_devmode = (DevMode)Marshal.PtrToStructure(structPtr, _devmode.GetType());
 			Marshal.FreeHGlobal(structPtr);
+			_nCutLength = BitConverter.ToInt32(arData, 1364);
 		}
 		private bool AddTempFont(byte[] arData, string sFileName)
 		{
@@ -113,8 +116,7 @@ namespace EmfView
 			//if (CreateScalableFontResource(0x11, sFot, sPath, null) <= 0)
 			//	return false;
 			int nRet = AddFontResource(sPath);//sFot);//
-			_arTmpFont[_nTmpFont] = sPath;
-			this._nTmpFont++;
+			this._lsTmpFonts.Add(sPath);
 			return true;
 		}
 
@@ -305,9 +307,25 @@ namespace EmfView
 			this.EnsurePosition(this._nHeaderSize);
 			this.ParseDataRecords();
 			txPage.Text = string.Format("{0}/{1}", iPage, _PageCount);
-			string sInfo = string.Format("{0}\nPageSize:{1}x{2} pix\nDPI:{3}x{4}\nTempFont:{5}\n",
-				_sDocName, _nPageW, _nPageH, _DpiX, _DpiY, _nTmpFont);
-			txInfo.Text = sInfo;
+			float fPaperW = _nPageW * 25.4f / (int)_DpiX; // mm
+			float fPaperH = _nPageH * 25.4f / (int)_DpiY;
+			txInfo.Text = string.Format("DocName:{0}\nPageSize:{1}x{2}pix\nPaperSize:{3:0.#}x{4:0.#}mm\nDPI:{5:0.##}x{6:0.##}\nTempFont:{7}\r\n",
+				_sDocName, _nPageW, _nPageH, fPaperW, fPaperH, _DpiX, _DpiY, _nTmpFont);
+			if (_devmode.dmSize > 0)
+			{
+				txInfo.Text += "DevMode:\r\n";
+				txInfo.Text += string.Format("orient:{0} papersize:{1},{2}x{3}\nfields:{4:X} scale:{5} copies:{6} source:{7}\r\n",
+					_devmode.dmOrientation, _devmode.dmPaperSize, _devmode.dmPaperWidth, _devmode.dmPaperLength,
+					_devmode.dmFields, _devmode.dmScale, _devmode.dmCopies, _devmode.dmDefaultSource);
+				txInfo.Text += string.Format("Res:{0}x{1} color:{2} duplex:{3} media:{4}\r\n",
+					_devmode.dmPrintQuality, _devmode.dmYResolution, _devmode.dmColor, _devmode.dmDuplex, _devmode.dmMediaType);
+				char[] arName = new char[32];
+				for (int i=0; i<32; i++)
+					arName[i] = (char)_devmode.dmFormName[i];
+				string sName = new string(arName);
+				txInfo.Text += string.Format("formName:{0}\r\n", sName);
+				txInfo.Text += string.Format("CutLen:{0}mm\r\n", _nCutLength);
+			}
 			//picBox.Image = this._img;
 			this._ptDown.X = 0;
 			Refresh();
@@ -316,7 +334,7 @@ namespace EmfView
 		private void btnOpen_Click(object sender, EventArgs e)
 		{
 			OpenFileDialog dlg = new OpenFileDialog();
-			dlg.Filter = "Job File (*.dat)|*.dat|Spl File (*.spl)|*.spl|All Files (*.*)|*.*||"; ;
+			dlg.Filter = "Job File (*.dat)|*.dat|Spl File (*.spl)|*.spl|All Files (*.*)|*.*||";
 			if (DialogResult.Cancel == dlg.ShowDialog())
 				return;
 			this._sFileName = dlg.FileName;
@@ -435,10 +453,10 @@ namespace EmfView
 		private void formEmfView_FormClosed(object sender, FormClosedEventArgs e)
 		{
 			int i, nRet;
-			for (i = 0; i < _nTmpFont; i++)
+			for (i = 0; i < _lsTmpFonts.Count; i++)
 			{
-				nRet = RemoveFontResource(_arTmpFont[i]);
-				File.Delete(_arTmpFont[i]);
+				nRet = RemoveFontResource(_lsTmpFonts[i]);
+				//File.Delete(_lsTmpFonts[i]); // using by system?
 			}
 		}
 
