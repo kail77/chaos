@@ -1,11 +1,15 @@
 AES加密算法，CBC-Mode, UTF8格式，key_len=32,iv_len=16, PKCS7-Padding
 
 CryptoCppTest: 调用cryptopp.dll Crypto++ 支持多种加解密算法，RSA,DES,AES(ECB,CBC,CFB,OFB,CTR: 5modes)... 但在XP无法运行？
-CryptoCsTest: C# Rijndael lib
+CryptoCsTest: C# encrypt lib UTF8编码
 CryptoTest: C++ Rijndael 源代码(AES只是其中的一个特例)
-
-7OdafIRd7CKEqWGzJV2nKGedliuUA2/sEFeEI6aVY/7CacpitgFqz8YmfXyA2wLfcgsMqxjZZAkHWHkv03sUl2V7WA1eokEz9jcaknxD8Y5gS4ELmssskl+iaSLANJa6TuvYzKenZvHoB/iTXPaBehM19bYxdtySQr2OMiv7O/7SFLEwds3YckiSceowop5O0JmaLHMfcuOGtzbsUhAKwqz0FvrkjJM/RaPumzJx7835WS5CQWfpNOmfpbXBQiymkSOyYE8k6F0dGelKe63Bw5AyHnxVPg8oHb4UWUHV64DDAo02qb6QbaAfG4VC9Qmhaj5GStbZQvPjMuWP7mOIf5NS4pMlO3x51b+J4XgqcqFdh6NaAKL0YySXHaGZjEaQ
-
-注意CryptocsTest为UTF8编码
-
 SparseCode: 文件稀疏加密，对文件的内容部分加密，使其内容改变，不被识别。
+
+CryptoCsTest: C#-RSA
+非对称，密文比原数据长，速度较慢。使用公钥加密数据，私钥解密。使用私钥签名数据，公钥验证签名，不能加解密数据？
+
+CryptoCsTest: C#-ECC(ECDiffieHellman)
+非对称加密，比RSA强度高，速度快。密文与原数据等长，16字节对齐。
+该加密的模式为，A-B双方各自创建ECDiffieHellmanCng/Aes加密对象，并交换公钥pubkeyA,pubkeyB/aes.IV_A,aes.IV_B，各自产生keyA/keyB.
+A加密数据后，传输密文给B, B使用keyB,IV_A解密；B加密数据时，A使用keyA,IV_B解密。
+
