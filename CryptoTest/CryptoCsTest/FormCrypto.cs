@@ -13,6 +13,8 @@ namespace CryptoTest
 {
 	public partial class FormCrypto : Form
 	{
+		const string _sEncKeyName = "encoder_key_name_1";
+		const string _sDecKeyName = "decoder_key_name_2";
 		public FormCrypto()
 		{
 			InitializeComponent();
@@ -87,8 +89,51 @@ namespace CryptoTest
 				//第二个参数用来选择Padding的格式
 				bytOut = rsaProvider.Encrypt(bytIn, false);	//对数据data进行加密，并返回加密结果；
 			}
-			//ms = null;
-			//cs = null;
+			else if (cbAlg.SelectedIndex == 2) // ECC
+			{
+				ECDiffieHellmanCng encoder, decoder; // need .net 3.5
+				CngKey encKey, decKey;
+				try
+				{
+					encKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sEncKeyName);
+				}
+				catch(Exception)// ex
+				{
+					encKey = CngKey.Open(FormCrypto._sEncKeyName);
+				}
+				encoder = new ECDiffieHellmanCng(encKey);
+				// create decoder:其实不应该在这里创建，而是把pubkey传过来。这里仅为了测试方便.
+				try
+				{
+					decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName);
+				}
+				catch(Exception)// ex
+				{
+					decKey = CngKey.Open(FormCrypto._sDecKeyName);
+				}
+				decoder = new ECDiffieHellmanCng(decKey);
+				encoder.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+				decoder.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+				encoder.HashAlgorithm = CngAlgorithm.Sha256;
+				decoder.HashAlgorithm = CngAlgorithm.Sha256;
+
+				this.tbKey1.Text = Convert.ToBase64String(encoder.PublicKey.ToByteArray());//encoder's pub key
+
+				Aes aes = new AesCryptoServiceProvider();
+				CngKey k = CngKey.Import(decoder.PublicKey.ToByteArray(), CngKeyBlobFormat.EccPublicBlob);
+				aes.Key = encoder.DeriveKeyMaterial(k);
+				this.tbKey2.Text = Convert.ToBase64String(aes.IV);
+				// Encrypt text
+				using (MemoryStream ciphertext = new MemoryStream())
+				using (CryptoStream cs = new CryptoStream(ciphertext, aes.CreateEncryptor(), CryptoStreamMode.Write))
+				{
+					cs.Write(bytIn, 0, bytIn.Length);
+					cs.Close();
+					bytOut = ciphertext.ToArray();
+				}
+				encKey.Delete();
+				//decKey.Delete(); //cannot delete, or mismatch with current key
+			}
 			tbHexData.Text = ByteArrayToString(bytOut);
 			tbCipher.Text = Convert.ToBase64String(bytOut);
 		}
@@ -122,6 +167,38 @@ namespace CryptoTest
 				rsaProvider.FromXmlString(tbKey2.Text);	//将私钥导入到RSA对象
 				byte[] bytOut = rsaProvider.Decrypt(bytIn, false);	//对数据data解密，并返回加密结果；
 				sRet = Encoding.UTF8.GetString(bytOut);
+			}
+			else if (cbAlg.SelectedIndex == 2) // ECC
+			{
+				CngKey decKey;
+				try
+				{
+					//decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName);
+					decKey = CngKey.Open(FormCrypto._sDecKeyName);
+				}
+				catch (Exception)// ex
+				{
+					MessageBox.Show("please encode first");
+					return;
+				}
+				//CngKey decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName);
+				ECDiffieHellmanCng decoder = new ECDiffieHellmanCng(decKey);
+				decoder.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+				decoder.HashAlgorithm = CngAlgorithm.Sha256;
+
+				Aes aes = new AesCryptoServiceProvider();
+				aes.IV = Convert.FromBase64String(this.tbKey2.Text);
+				CngKey k = CngKey.Import(Convert.FromBase64String(this.tbKey1.Text), CngKeyBlobFormat.EccPublicBlob);
+				aes.Key = decoder.DeriveKeyMaterial(k);
+
+				MemoryStream plaintext = new MemoryStream();
+				using (CryptoStream cs = new CryptoStream(plaintext, aes.CreateDecryptor(), CryptoStreamMode.Write))
+				{
+					cs.Write(bytIn, 0, bytIn.Length);
+					cs.Close();
+					sRet = Encoding.UTF8.GetString(plaintext.ToArray());
+				}
+				decKey.Delete();
 			}
 			textContent.Text = sRet;
 		}
@@ -163,6 +240,11 @@ namespace CryptoTest
 			{
 				labelKey1.Text = "Pub Key";
 				labelKey2.Text = "Prv Key";
+			}
+			else if (cbAlg.SelectedIndex == 2) // ECC
+			{
+				labelKey1.Text = "Pub Key";
+				labelKey2.Text = "IV";
 			}
 		}
 

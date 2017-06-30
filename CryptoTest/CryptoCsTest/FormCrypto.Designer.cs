@@ -135,7 +135,8 @@
 			this.cbAlg.FormattingEnabled = true;
 			this.cbAlg.Items.AddRange(new object[] {
             "AES",
-            "RSA"});
+            "RSA",
+            "ECC"});
 			this.cbAlg.Location = new System.Drawing.Point(100, 9);
 			this.cbAlg.Name = "cbAlg";
 			this.cbAlg.Size = new System.Drawing.Size(121, 24);
