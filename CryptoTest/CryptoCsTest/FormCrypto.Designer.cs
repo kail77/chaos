@@ -44,6 +44,8 @@
 			this.labelKey2 = new System.Windows.Forms.Label();
 			this.btnSign = new System.Windows.Forms.Button();
 			this.btnVerify = new System.Windows.Forms.Button();
+			this.txPrvKey = new System.Windows.Forms.TextBox();
+			this.labelPrivKey = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// btnEncryt
@@ -59,11 +61,11 @@
 			// 
 			// textContent
 			// 
-			this.textContent.Location = new System.Drawing.Point(17, 112);
+			this.textContent.Location = new System.Drawing.Point(17, 133);
 			this.textContent.Margin = new System.Windows.Forms.Padding(4);
 			this.textContent.Multiline = true;
 			this.textContent.Name = "textContent";
-			this.textContent.Size = new System.Drawing.Size(854, 132);
+			this.textContent.Size = new System.Drawing.Size(854, 111);
 			this.textContent.TabIndex = 1;
 			// 
 			// btnDecrypt
@@ -96,7 +98,7 @@
 			// lbPlain
 			// 
 			this.lbPlain.AutoSize = true;
-			this.lbPlain.Location = new System.Drawing.Point(14, 92);
+			this.lbPlain.Location = new System.Drawing.Point(12, 113);
 			this.lbPlain.Name = "lbPlain";
 			this.lbPlain.Size = new System.Drawing.Size(144, 16);
 			this.lbPlain.TabIndex = 7;
@@ -195,11 +197,29 @@
 			this.btnVerify.UseVisualStyleBackColor = true;
 			this.btnVerify.Click += new System.EventHandler(this.btnVerify_Click);
 			// 
+			// txPrvKey
+			// 
+			this.txPrvKey.Location = new System.Drawing.Point(100, 73);
+			this.txPrvKey.Name = "txPrvKey";
+			this.txPrvKey.Size = new System.Drawing.Size(771, 26);
+			this.txPrvKey.TabIndex = 19;
+			// 
+			// labelPrivKey
+			// 
+			this.labelPrivKey.AutoSize = true;
+			this.labelPrivKey.Location = new System.Drawing.Point(14, 76);
+			this.labelPrivKey.Name = "labelPrivKey";
+			this.labelPrivKey.Size = new System.Drawing.Size(72, 16);
+			this.labelPrivKey.TabIndex = 18;
+			this.labelPrivKey.Text = "Priv-Key";
+			// 
 			// FormCrypto
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(884, 641);
+			this.Controls.Add(this.txPrvKey);
+			this.Controls.Add(this.labelPrivKey);
 			this.Controls.Add(this.btnVerify);
 			this.Controls.Add(this.btnSign);
 			this.Controls.Add(this.tbKey2);
@@ -243,6 +263,8 @@
 		private System.Windows.Forms.Label labelKey2;
 		private System.Windows.Forms.Button btnSign;
 		private System.Windows.Forms.Button btnVerify;
+		private System.Windows.Forms.TextBox txPrvKey;
+		private System.Windows.Forms.Label labelPrivKey;
 	}
 }
 

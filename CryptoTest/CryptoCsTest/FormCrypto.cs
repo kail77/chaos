@@ -93,25 +93,29 @@ namespace CryptoTest
 			{
 				ECDiffieHellmanCng encoder, decoder; // need .net 3.5
 				CngKey encKey, decKey;
-				try
-				{
-					encKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sEncKeyName);
-				}
-				catch(Exception)// ex
-				{
+				CngKeyCreationParameters creationParam = new CngKeyCreationParameters();
+				creationParam.ExportPolicy = CngExportPolicies.AllowPlaintextExport; // allow export priv-key
+				//creationParam.KeyUsage = CngKeyUsages.AllUsages;
+				//creationParam.KeyCreationOptions = CngKeyCreationOptions.MachineKey;
+				//creationParam.Provider = CngProvider.MicrosoftSoftwareKeyStorageProvider;
+				//creationParam.UIPolicy = new CngUIPolicy(CngUIProtectionLevels.None);
+
+				if (CngKey.Exists(FormCrypto._sEncKeyName))
 					encKey = CngKey.Open(FormCrypto._sEncKeyName);
-				}
+				else
+					encKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sEncKeyName, creationParam);
 				encoder = new ECDiffieHellmanCng(encKey);
+
 				// create decoder:其实不应该在这里创建，而是把pubkey传过来。这里仅为了测试方便.
-				try
-				{
-					decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName);
-				}
-				catch(Exception)// ex
-				{
+				if (CngKey.Exists(FormCrypto._sDecKeyName))
 					decKey = CngKey.Open(FormCrypto._sDecKeyName);
-				}
+				else
+					decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName, creationParam);
+				// decoder should save this private key, then load later
+				txPrvKey.Text = Convert.ToBase64String(decKey.Export(CngKeyBlobFormat.EccPrivateBlob)); // decode priv-key
 				decoder = new ECDiffieHellmanCng(decKey);
+
+				string sEncPrvKey = Convert.ToBase64String(encKey.Export(CngKeyBlobFormat.EccPrivateBlob)); // encoder save this priv-key
 				encoder.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
 				decoder.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
 				encoder.HashAlgorithm = CngAlgorithm.Sha256;
@@ -132,7 +136,7 @@ namespace CryptoTest
 					bytOut = ciphertext.ToArray();
 				}
 				encKey.Delete();
-				//decKey.Delete(); //cannot delete, or mismatch with current key
+				decKey.Delete();
 			}
 			tbHexData.Text = ByteArrayToString(bytOut);
 			tbCipher.Text = Convert.ToBase64String(bytOut);
@@ -170,18 +174,7 @@ namespace CryptoTest
 			}
 			else if (cbAlg.SelectedIndex == 2) // ECC
 			{
-				CngKey decKey;
-				try
-				{
-					//decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName);
-					decKey = CngKey.Open(FormCrypto._sDecKeyName);
-				}
-				catch (Exception)// ex
-				{
-					MessageBox.Show("please encode first");
-					return;
-				}
-				//CngKey decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName);
+				CngKey decKey = CngKey.Import(Convert.FromBase64String(txPrvKey.Text), CngKeyBlobFormat.EccPrivateBlob);
 				ECDiffieHellmanCng decoder = new ECDiffieHellmanCng(decKey);
 				decoder.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
 				decoder.HashAlgorithm = CngAlgorithm.Sha256;

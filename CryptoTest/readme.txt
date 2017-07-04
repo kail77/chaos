@@ -13,3 +13,11 @@ CryptoCsTest: C#-ECC(ECDiffieHellman)
 该加密的模式为，A-B双方各自创建ECDiffieHellmanCng/Aes加密对象，并交换公钥pubkeyA,pubkeyB/aes.IV_A,aes.IV_B，各自产生keyA/keyB.
 A加密数据后，传输密文给B, B使用keyB,IV_A解密；B加密数据时，A使用keyA,IV_B解密。
 
+创建ECD加密对象时，将私钥导出并保存：
+CngKeyCreationParameters creationParam = new CngKeyCreationParameters();
+creationParam.ExportPolicy = CngExportPolicies.AllowPlaintextExport; // allow export priv-key
+decKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP256, FormCrypto._sDecKeyName, creationParam);
+txPrvKey.Text = Convert.ToBase64String(decKey.Export(CngKeyBlobFormat.EccPrivateBlob)); // decode priv-key
+使用时再加载priv-key
+CngKey decKey = CngKey.Import(Convert.FromBase64String(txPrvKey.Text), CngKeyBlobFormat.EccPrivateBlob);
+ECDiffieHellmanCng decoder = new ECDiffieHellmanCng(decKey);
