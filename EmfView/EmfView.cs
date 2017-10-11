@@ -99,7 +99,8 @@ namespace EmfView
 			Marshal.Copy(arData, nPos, structPtr, nSize);
 			_devmode = (DevMode)Marshal.PtrToStructure(structPtr, _devmode.GetType());
 			Marshal.FreeHGlobal(structPtr);
-			_nCutLength = BitConverter.ToInt32(arData, 1364);
+			int nShdHead = BitConverter.ToInt32(arData, 4);
+			_nCutLength = BitConverter.ToInt32(arData, nShdHead + 1156);
 		}
 		private bool AddTempFont(byte[] arData, string sFileName)
 		{
