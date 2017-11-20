@@ -16,7 +16,8 @@ class CNewTaskDlg : public CDialog
 public:
 	CNewTaskDlg(CWnd* pParent = NULL, CString sUrlMon="");   // standard constructor
 	~CNewTaskDlg();
-	inline CStringList& GetUrlList(){return m_strListUrl;}
+	inline CStringList& GetUrlList() {return m_strListUrl;}
+	inline CString& GetSubFolder() {return m_sSubFolder;}
 
 // Dialog Data
 	//{{AFX_DATA(CNewTaskDlg)
@@ -35,6 +36,7 @@ public:
 private:
 	CStringList m_strListUrl;
 	CString m_sUrlMon; // url from clipboard
+	CString m_sSubFolder;
 
 // Implementation
 protected:

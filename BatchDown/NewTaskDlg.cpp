@@ -111,5 +111,6 @@ void CNewTaskDlg::OnOK()
 		sText.Replace("*", szNum);
 		m_strListUrl.AddTail(sText);
 	}
+	GetDlgItemText(IDC_SUBFOLDER, m_sSubFolder);
 	CDialog::OnOK();
 }

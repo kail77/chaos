@@ -51,6 +51,7 @@ protected:
 	int m_nBufSize;	// 
 	LPBYTE m_pBuf; //  downloading buf
 	CString m_sDestPath; // save to path, end with '\'
+	CString m_sSubFolder;
 	CString m_sClipText; // text in clip board
 
 	// Generated message map functions

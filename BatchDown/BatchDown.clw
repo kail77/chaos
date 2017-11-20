@@ -2,7 +2,7 @@
 
 [General Info]
 Version=1
-LastClass=CNewTaskDlg
+LastClass=CBatchDownDlg
 LastTemplate=CDialog
 NewFileInclude1=#include "stdafx.h"
 NewFileInclude2=#include "BatchDown.h"
@@ -30,26 +30,25 @@ ImplementationFile=BatchDownDlg.cpp
 Filter=D
 BaseClass=CDialog
 VirtualFilter=dWC
-LastObject=CBatchDownDlg
+LastObject=IDC_DELETE
 
 
 
 [DLG:IDD_BATCHDOWN]
 Type=1
 Class=CBatchDownDlg
-ControlCount=7
+ControlCount=6
 Control1=IDOK,button,1342242817
 Control2=IDCANCEL,button,1073807360
 Control3=IDC_LISTTASK,SysListView32,1350631433
 Control4=IDC_CLEAR,button,1342242816
 Control5=IDC_ADDTASK,button,1342242816
-Control6=IDC_DELETE,button,1342242816
-Control7=IDC_INFO,static,1342308352
+Control6=IDC_INFO,static,1342308352
 
 [DLG:IDD_NEWTASK]
 Type=1
 Class=CNewTaskDlg
-ControlCount=14
+ControlCount=16
 Control1=IDC_URL,edit,1350631552
 Control2=IDC_STATIC,static,1342308352
 Control3=IDC_RANGE1,edit,1350631552
@@ -64,6 +63,8 @@ Control11=IDOK,button,1342242817
 Control12=IDCANCEL,button,1342242816
 Control13=IDC_EXAMPLE,static,1073872896
 Control14=IDC_MATCH,button,1342242816
+Control15=IDC_STATIC,static,1342308352
+Control16=IDC_SUBFOLDER,edit,1350631552
 
 [CLS:CNewTaskDlg]
 Type=0

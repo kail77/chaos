@@ -83,6 +83,8 @@ int CBatchDownDlg::LoadConfig()
 	m_nBufSize = 1024*GetPrivateProfileInt("Config", "BufSize", 2048, szPath);
 	GetPrivateProfileString("Config", "DestPath", NULL, szText,256, szPath);
 	m_sDestPath = szText[0]? szText : "F:\\";
+	if(m_sDestPath.GetAt(m_sDestPath.GetLength()-1) != '\\')
+		m_sDestPath += '\\';
 	return 0;
 }
 
@@ -149,7 +151,11 @@ int CBatchDownDlg::DownINetFile(int idx)
 		pfile->QueryInfoStatusCode(dwStatusCode);
 		if(dwStatusCode == HTTP_STATUS_OK)
 		{
-			sDestFile.Format("%s%s", m_sDestPath, sUrl.Mid(sUrl.ReverseFind('/')+1));
+			if(m_sSubFolder.IsEmpty())
+				sDestFile = m_sDestPath;
+			else
+				sDestFile.Format("%s%s\\", m_sDestPath, m_sSubFolder);
+			sDestFile += sUrl.Mid(sUrl.ReverseFind('/')+1); // filename
 			nSize = pfile->SeekToEnd();//GetLength();
 			pfile->SeekToBegin();
 			if(nSize > 0)
@@ -251,6 +257,7 @@ void CBatchDownDlg::OnAddtask()
 	int i=0, il,ir;
 	CString sUrl,sName;
 	CStringList& listUrl = dlg.GetUrlList();
+	m_sSubFolder = dlg.GetSubFolder();
 	POSITION pos;
 	pos = listUrl.GetHeadPosition();
 	while (pos != NULL)
