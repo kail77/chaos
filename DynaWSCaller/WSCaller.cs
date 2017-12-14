@@ -52,8 +52,8 @@ namespace DynaWSCaller
 				//return;
 			}
 		}
-
-		private void btnLoad_Click(object sender, EventArgs e)
+		// load Assembly from wsdl url
+		private Assembly LoadWsdl(string sWsdlUrl)
 		{
 			// 1. 使用 WebClient 下载 WSDL 信息。
 			WebClient web = new WebClient();
@@ -68,7 +68,7 @@ namespace DynaWSCaller
 			catch (Exception ex)
 			{
 				MessageBox.Show(ex.Message);
-				return;
+				return null;
 			}
 			_strServiceName = description.Services[0].Name;
 			lblServiceName.Text = _strServiceName;
@@ -109,45 +109,63 @@ namespace DynaWSCaller
 			parameter.ReferencedAssemblies.Add("System.Data.dll");
 
 			CompilerResults result = provider.CompileAssemblyFromDom(parameter, unit);
-			Assembly asmFuncs;
+			Assembly asmFuncs = null;
 			if (result.Errors.HasErrors)
 			{
-				MessageBox.Show("load ws error");
-				return;
+				MessageBox.Show("load wsdl error");
 			}
 			else
 			{
-				btnInvoke.Enabled = true;
 				asmFuncs = result.CompiledAssembly;
 			}
-			//Assembly asmFuncs = Assembly.LoadFrom(_strServiceName + ".dll"); // 调用前面保存的文件
+			return asmFuncs;
+		}
+
+		private void btnLoad_Click(object sender, EventArgs e)
+		{
+			Assembly asmFuncs;
+			if (textWsdl.Text.Length > 0)
+				asmFuncs = LoadWsdl(textWsdl.Text);
+			else
+				asmFuncs = Assembly.LoadFrom(textAddress.Text + ".dll"); // call mod.dll
+			if (asmFuncs == null)
+				return;
+			_strServiceName = textAddress.Text;
 			// 如果在前面为代理类添加了命名空间，此处需要将命名空间添加到类型前面。
 			_asmType = asmFuncs.GetType(_strServiceName);
 			if (_asmType == null)
 			{
-				MessageBox.Show("err service/namespace");
+				MessageBox.Show("err service/namespace, dll name should be namespace.class.dll");
 				return;
 			}
 			_objClient = Activator.CreateInstance(_asmType);
 			MethodInfo[] arMethods = _asmType.GetMethods();
 			foreach (MethodInfo m in arMethods)
 			{
-				//if (m.Name == "CancelAsync")
-				//	break;
+				if (m.Name == "Equals" || m.Name == "GetHashCode" || m.Name == "GetType" || m.Name == "ToString")
+					break;
 				if (m.Name.EndsWith("Async") || m.Name.EndsWith("Completed"))
 					continue;
 				cbFunction.Items.Add(m.Name);
 			}
 			cbFunction.SelectedIndex = 0;
-			// set service address
+			if (textWsdl.Text.Length > 0)
+				SetServiceAddress(textAddress.Text);
+			btnInvoke.Enabled = true;
+		}
+
+		// set web service address
+		private int SetServiceAddress(string sUrl)
+		{
 			MethodInfo method = _asmType.GetMethod("get_Url");
 			object oret = method.Invoke(_objClient, null);
 			if (textAddress.Text != oret.ToString())
 			{
 				method = _asmType.GetMethod("set_Url");
-				object[] objs = { textAddress.Text };
+				object[] objs = { sUrl };
 				method.Invoke(_objClient, objs);
 			}
+			return 0;
 		}
 
 		private void cbFunction_SelectedIndexChanged(object sender, EventArgs e)
