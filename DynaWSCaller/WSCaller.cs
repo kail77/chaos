@@ -125,12 +125,16 @@ namespace DynaWSCaller
 		{
 			Assembly asmFuncs;
 			if (textWsdl.Text.Length > 0)
+			{
 				asmFuncs = LoadWsdl(textWsdl.Text);
+			}
 			else
+			{
 				asmFuncs = Assembly.LoadFrom(textAddress.Text + ".dll"); // call mod.dll
+				_strServiceName = textAddress.Text;
+			}
 			if (asmFuncs == null)
 				return;
-			_strServiceName = textAddress.Text;
 			// 如果在前面为代理类添加了命名空间，此处需要将命名空间添加到类型前面。
 			_asmType = asmFuncs.GetType(_strServiceName);
 			if (_asmType == null)
